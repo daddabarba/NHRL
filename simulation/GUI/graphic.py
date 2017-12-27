@@ -5,7 +5,7 @@ import graphicPar as par
 
 
 class dispWorld:
-    def __init__(self, size, interestPoints, startingState, startingBelievedState, maps):
+    def __init__(self, size, features, startingState, startingBelievedState, maps):
         self.track = par.startingTrack
         self.render = par.startingRender
 
@@ -59,9 +59,9 @@ class dispWorld:
                                              edgecolor="none")
             (self.ax).add_patch(wall)
 
-        for i in range(len(interestPoints)):
-            for k in range(len(interestPoints[i])):
-                loc = interestPoints[i][k]
+        for i in range(len(features)):
+            for k in range(len(features[i])):
+                loc = features[i][k]
 
                 self._replace(loc, (par.colorsInt)[i])
                 (self.colors)[loc[0]][loc[1]] = (par.colorsInt)[i]

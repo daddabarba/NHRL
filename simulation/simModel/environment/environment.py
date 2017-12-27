@@ -12,6 +12,8 @@ sys.path.append('../../../messages/')
 import numpy as np
 import random as rand
 
+import convertion as con
+
 import agent
 import modWorld as modw
 import preDefModels as pdm
@@ -22,111 +24,8 @@ import graphic
 import messages as mes
 
 
-def _isNumber(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
 
-
-def _convertFile(file):
-    maze = open(file, "r+")
-
-    maze.read(9)
-    lines = []
-
-    maxX = -1
-    maxY = -1
-
-    while (True):
-        line = []
-
-        for i in range(0, 4):
-            maze.read(5)
-
-            p = int(maze.read(1))
-            c = maze.read(1)
-
-            while (_isNumber(c)):
-                p = p * 10 + int(c)
-                c = maze.read(1)
-
-            p = int((p - 2) / 16)
-            line.append(p)
-
-            if (not (i % 2) and p > maxX):
-                maxX = p
-            if ((i % 2) and p > maxY):
-                maxY = p
-
-        lines.append(line)
-        c = maze.read(4)
-        c = maze.read(1)
-
-        if (c == "."):
-            break
-        maze.read(8)
-
-    maze.close()
-
-    return (lines, (maxY, maxX))
-
-
-def _isHorizontal(line):
-    return line[0] != line[2]
-
-
-def _isVertical(line):
-    return line[1] != line[3]
-
-
-def _convertLines(lines, size):
-    maxX = size[1]
-    maxY = size[0]
-
-    maps = np.zeros((maxY, maxX, 4))
-
-    for i in range(len(lines)):
-        line = lines[i]
-        maps = _addLine(maps, line, size)
-
-    return maps
-
-
-def _addLine(maps, line, size):
-    maxX = size[1]
-    maxY = size[0]
-
-    if (_isHorizontal(line)):
-
-        rd = line[1]
-        ru = rd - 1
-
-        for i in range(line[0], line[2]):
-            if (rd < maxX):
-                maps[rd][i][1] = 1
-            if (ru >= 0):
-                maps[ru][i][3] = 1
-
-    elif (_isVertical(line)):
-
-        cr = line[0]
-        cl = cr - 1
-
-        for i in range(line[1], line[3]):
-            if (cr < maxY):
-                maps[i][cr][2] = 1
-            if (cl >= 0):
-                maps[i][cl][0] = 1
-
-    else:
-        mes.errorMessage("cannot recognise wall")
-
-    return maps
-
-
-def _getInterestPoints(maps, size):
+def _getFeatures(maps, size):
     goals, impasses, crossRoads, food, water = [], [], [], [], []
 
     for i in range(0, size[0]):
@@ -168,15 +67,15 @@ def _getInterestPoints(maps, size):
     return (goals, impasses, crossRoads, food, water)
 
 
-def _preDefRewardSet(interestPoints):
+def _preDefRewardSet(features):
     rewardSet = []
 
-    for k in range(len(interestPoints)):
+    for k in range(len(features)):
 
         signalSet = [(par.baseReward)]
 
-        for i in range(len(interestPoints[k])):
-            signalSet.append((interestPoints[k][i], par.signalReward))
+        for i in range(len(features[k])):
+            signalSet.append((features[k][i], par.signalReward))
 
         rewardSet.append(signalSet)
 
@@ -188,19 +87,19 @@ class environment:
         mes.currentMessage("linking agent")
         (self.agent) = agent
         mes.currentMessage("converting SVG file into lines format")
-        (self.lines, self.size) = _convertFile(fileName)
+        (self.lines, self.size) = con._convertFile(fileName)
         mes.currentMessage("converting lines format into map format")
-        (self.maps) = _convertLines(self.lines, self.size)
+        (self.maps) = con._convertLines(self.lines, self.size)
 
         mes.currentMessage("retreiving interest points")
-        self.interestPoints = _getInterestPoints(self.maps, self.size)
+        self.features = _getFeatures(self.maps, self.size)
 
         mes.settingMessage("world")
 
         if (startingState == "c" or startingState == "center" or startingState == "centre"):
             startingState = int(((self.size)[0] * (self.size)[1]) / 2 + (self.size)[0] / 2) - 1
 
-        self.world = pdm.stochasticMaze(self.size, self.lines, _preDefRewardSet(self.interestPoints), startingState)
+        self.world = pdm.stochasticMaze(self.size, self.lines, _preDefRewardSet(self.features), startingState)
         mes.setMessage("world")
 
         self.graph = graph
@@ -211,7 +110,7 @@ class environment:
         sbs = (self.world)._invHashFun((self.agent).currentState)
 
         mes.settingMessage("graphic render")
-        self.graphic = graphic.dispWorld(self.size, self.interestPoints, ss, sbs, self.maps)
+        self.graphic = graphic.dispWorld(self.size, self.features, ss, sbs, self.maps)
         mes.setMessage("graphic render")
 
     def performAction(self, action):
