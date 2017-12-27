@@ -60,6 +60,7 @@ class dispWorld:
             (self.ax).add_patch(wall)
 
         for i in range(len(features)):
+            print((par.colorsInt)[i])
             for k in range(len(features[i])):
                 loc = features[i][k]
 

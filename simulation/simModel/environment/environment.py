@@ -9,8 +9,7 @@ sys.path.append('../')
 sys.path.append('../../GUI/')
 sys.path.append('../../../messages/')
 
-import numpy as np
-import random as rand
+sys.path.append('../environment/features/')
 
 import convertion as con
 
@@ -18,54 +17,41 @@ import agent
 import modWorld as modw
 import preDefModels as pdm
 
+import features
+
 import parameters as par
 
 import graphic
 import messages as mes
 
+def getFeatDefinitions():
+    namesList = dir(features)
+    namesList = namesList[8:len(namesList)]
 
+    functionsList = []
+    for i in range(len(namesList)):
+        att = getattr(features, namesList[i])
+        if(callable(att)):
+            functionsList.append(att);
 
-def _getFeatures(maps, size):
-    goals, impasses, crossRoads, food, water = [], [], [], [], []
+    return tuple(functionsList)
 
-    for i in range(0, size[0]):
-        for k in range(0, size[1]):
-            isUpperExit = i == 0 and maps[i][k][1] == 0
-            isLowerExit = i == (size[0] - 1) and maps[i][k][3] == 0
-            isRightExit = k == (size[1] - 1) and maps[i][k][0] == 0
-            isLeftExit = k == 0 and maps[i][k][2] == 0
+def _getFeatures(map, size):
+    definitions = getFeatDefinitions()
+    ft = []
 
-            isExit = isUpperExit or isLowerExit or isRightExit or isLeftExit
+    for i in range(len(definitions)):
+        ft.append([])
 
-            if (isExit):
-                goals.append((i, k))
+    for row in range(size[0]):
+        for col in range(size[0]):
 
-            else:
-                isBorder = (i <= int(size[0] / 5) or i >= int(4 * (size[0] / 5))) or (
-                k < int(size[1] / 5) or k > int(4 * (size[1] / 5)))
-                isCentral = (i >= int(2 * (size[0] / 4)) and i <= int(3 * (size[0] / 4))) or (
-                k >= int(2 * (size[1] / 4)) and k <= int(3 * (size[1] / 4)))
+            for feat in range(len(definitions)):
 
-                walls = 0
-                for j in range(0, 4):
-                    walls += maps[i][k][j]
+                if definitions[feat]((row,col), map, size):
+                    ft[feat].append((row,col))
 
-                if (walls >= 3):
-                    impasses.append((i, k))
-
-                elif (walls <= 1):
-                    crossRoads.append((i, k))
-
-                else:
-                    p = float(rand.randint(0, 100)) / 100
-
-                    if (isBorder and p < par.waterP):
-                        water.append((i, k))
-                    elif (isCentral and p < par.foodP):
-                        food.append((i, k))
-
-    return (goals, impasses, crossRoads, food, water)
-
+    return tuple(ft)
 
 def _preDefRewardSet(features):
     rewardSet = []
