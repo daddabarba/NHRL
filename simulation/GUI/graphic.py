@@ -3,17 +3,29 @@ import matplotlib.patches as patches
 
 import graphicPar as par
 
+import random
+
+def r():
+    return random.randint(0,255)
+
+def randCol():
+    return '#%02x%02x%02x' % (r(),r(),r())
+
 
 class dispWorld:
-    def __init__(self, size, features, startingState, startingBelievedState, maps):
+    def __init__(self, size, features, startingState, startingBelievedState, maps, ftNames):
         self.track = par.startingTrack
         self.render = par.startingRender
 
         self.fig = plt.figure(figsize=(par.figSize, par.figSize), frameon=False)
+        self.figLeg = plt.figure(figsize=(par.figSize, par.figSize), frameon=False)
+
+        self.legend = (self.figLeg).add_subplot(111, aspect='equal')
         self.ax = (self.fig).add_subplot(111, aspect='equal')
 
-        h = self.stateHeight = (1 - (par.border) * (size[0] + 1)) / (size[0])
-        w = self.stateWidth = (1 - (par.border) * (size[1] + 1)) / (size[1])
+
+        h = self.stateHeight = (par.totHeight - (par.border) * (size[0] + 1)) / (size[0])
+        w = self.stateWidth = (par.totWidth - (par.border) * (size[1] + 1)) / (size[1])
 
         self.statesPatches = []
         self.colors = []
@@ -22,7 +34,7 @@ class dispWorld:
             rowPatches = []
             rowColors = []
 
-            y = 1 - ((h + par.border) * (r + 1))
+            y = par.totHeight - ((h + par.border) * (r + 1))
 
             color = ((par.colorFull) if (maps[r][0][2]) else (par.colorEmpty))
             wall = patches.Rectangle((0, y), par.border, h, facecolor=color, edgecolor="none")
@@ -59,13 +71,31 @@ class dispWorld:
                                              edgecolor="none")
             (self.ax).add_patch(wall)
 
+        self.ftColors = []
+
         for i in range(len(features)):
-            print((par.colorsInt)[i])
+
+            (self.ftColors).append(randCol())
+
             for k in range(len(features[i])):
                 loc = features[i][k]
 
-                self._replace(loc, (par.colorsInt)[i])
-                (self.colors)[loc[0]][loc[1]] = (par.colorsInt)[i]
+                self._replace(loc, (self.ftColors)[i])
+                (self.colors)[loc[0]][loc[1]] = (self.ftColors)[i]
+
+
+        y = 0.0
+        x = 0.0
+
+        h = float(1)/len(features)
+
+        for i in range(len(features)):
+            rect = patches.Rectangle((x, y), par.legW, h, facecolor=(self.ftColors)[i], edgecolor="none")
+            (self.legend).add_patch(rect)
+
+            (self.legend).text(x+par.legW,y,ftNames[i] + " (" + str(i) + ")", fontsize = par.fontSize)
+
+            y += (h)
 
         self.cs = startingState
         self.bs = startingBelievedState

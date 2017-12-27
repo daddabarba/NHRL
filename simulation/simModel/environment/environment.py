@@ -34,10 +34,10 @@ def getFeatDefinitions():
         if(callable(att)):
             functionsList.append(att);
 
-    return tuple(functionsList)
+    return ( tuple(functionsList), namesList )
 
 def _getFeatures(map, size):
-    definitions = getFeatDefinitions()
+    (definitions, names) = getFeatDefinitions()
     ft = []
 
     for i in range(len(definitions)):
@@ -51,7 +51,7 @@ def _getFeatures(map, size):
                 if definitions[feat]((row,col), map, size):
                     ft[feat].append((row,col))
 
-    return tuple(ft)
+    return (tuple(ft), names)
 
 def _preDefRewardSet(features):
     rewardSet = []
@@ -78,7 +78,7 @@ class environment:
         (self.maps) = con._convertLines(self.lines, self.size)
 
         mes.currentMessage("retreiving interest points")
-        self.features = _getFeatures(self.maps, self.size)
+        (self.features, self.ftNames) = _getFeatures(self.maps, self.size)
 
         mes.settingMessage("world")
 
@@ -96,7 +96,7 @@ class environment:
         sbs = (self.world)._invHashFun((self.agent).currentState)
 
         mes.settingMessage("graphic render")
-        self.graphic = graphic.dispWorld(self.size, self.features, ss, sbs, self.maps)
+        self.graphic = graphic.dispWorld(self.size, self.features, ss, sbs, self.maps, self.ftNames)
         mes.setMessage("graphic render")
 
     def performAction(self, action):
