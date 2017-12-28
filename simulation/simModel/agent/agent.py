@@ -78,7 +78,7 @@ class agent:
 
     def mapInternalState(self, sensors):
         return self.environment.world._hashFun(sensors)
-
+#
     def argMaxQ(self, state, rs):
 
         boundedInterestes = (self.I)[rs]
@@ -101,7 +101,7 @@ class agent:
         val = self._val(t)
 
         return val if (val > self.livePar.scheduleThresh) else 0
-
+#
     def _updateInterest(self, rs, state, action):
 
         (self.I)[rs][state][action] *= ((np.e) ** (

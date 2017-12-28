@@ -18,7 +18,7 @@ class dispWorld:
         self.render = par.startingRender
 
         self.fig = plt.figure(figsize=(par.figSize, par.figSize), frameon=False)
-        self.figLeg = plt.figure(figsize=(par.figSize, par.figSize), frameon=False)
+        self.figLeg = plt.figure(figsize=(par.figSize/2, par.figSize/2), frameon=False)
 
         self.legend = (self.figLeg).add_subplot(111, aspect='equal')
         self.ax = (self.fig).add_subplot(111, aspect='equal')
@@ -93,7 +93,7 @@ class dispWorld:
             rect = patches.Rectangle((x, y), par.legW, h, facecolor=(self.ftColors)[i], edgecolor="none")
             (self.legend).add_patch(rect)
 
-            (self.legend).text(x+par.legW,y,ftNames[i] + " (" + str(i) + ")", fontsize = par.fontSize)
+            (self.legend).text(x+par.legW +(w/4),y+(h/4),ftNames[i] + " (" + str(i) + ")", fontsize = par.fontSize)
 
             y += (h)
 
