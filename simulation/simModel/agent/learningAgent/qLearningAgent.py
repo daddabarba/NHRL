@@ -136,3 +136,7 @@ class interestQLA(qLA):
         (self.I)[rs][state][action] *= (np.e) ** (
         ((-(np.e) ** self.agent.livePar.interestB) * self._invVal(self.agent.time)) / (self.agent.livePar.interestA))
 
+
+class qLAIA(simAnneal, interestQLA):
+    def __init__(self):
+        super(qLAIA, self)
