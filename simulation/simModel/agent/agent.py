@@ -29,7 +29,7 @@ class agent:
         self._setHistory()
 
         mes.settingMessage("Action-state values table")
-        self.qAgent = qLA.qLA(self,self.environment.world._sizeRewardSignal, self.environment.world.numStates,
+        self.qAgent = qLA.interestQLA(self,self.environment.world._sizeRewardSignal, self.environment.world.numStates,
                    self.environment.world.numActions)
         mes.setMessage("Action-state values table")
 

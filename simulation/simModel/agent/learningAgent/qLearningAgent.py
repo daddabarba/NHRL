@@ -7,6 +7,7 @@ import random as rand
 
 import messages as mes
 
+
 class qLA():
     def __init__(self, agent, rs, r, c):
         self.agent = agent
@@ -16,50 +17,11 @@ class qLA():
         self.I = (np.zeros((len(self.Q), len(self.Q[0]), len(self.Q[0][0])))) + 1
         mes.setMessage("Action-state interest values table")
 
-    def argMaxQ(self, state, rs):
-        boundedInterestes = (self.I)[rs]
-
-        reDimQ = ((self.Q)[rs]) - np.outer(np.min(self.Q[rs], 1), np.ones(len(self.Q[rs][state])))
-        reDimQ /= (np.outer(np.sum(reDimQ, 1), np.ones(len(reDimQ[state]))))
-
-        V = reDimQ + boundedInterestes
-        max = 0
-
-        max = np.argmax(V[state])
-
-        return (max, (self.Q)[rs][state][max])
-
-    def _val(self, t):
-        return (np.e) ** (
-            ((-(np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t)
-
-    def _invVal(self, t):
-        return (np.e) ** (
-            (((np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t) - 1
-
-    def _schedule(self, t):
-        val = self._val(t)
-
-        return val if (val > self.agent.livePar.scheduleThresh) else 0
-        #
-
-    def _updateInterest(self, rs, state, action):
-        (self.I)[rs][state][action] *= (np.e)**( ((-(np.e)**self.agent.livePar.interestB)*self._invVal(self.agent.time))/(self.agent.livePar.interestA) )
-
     def policy(self, state, rs):
-        p = self._schedule(self.agent.time)
-        mes.currentMessage("Schedule: " + str(p))
-
-        dice = float(rand.randint(0, 100)) / 100
-
         (a, stateValue) = self.argMaxQ(state, rs)
         mes.currentMessage("evaluating state at: " + str(stateValue) + ", with best action: " + str(a))
 
-        if (dice <= p):
-            mes.currentMessage("acting randomly, with p: " + str(dice))
-            return rand.randint(0, 3)
-
-        mes.currentMessage("acting rationally, with p: " + str(dice))
+        mes.currentMessage("acting rationally")
         return a
 
     def learn(self, transition):
@@ -77,10 +39,6 @@ class qLA():
         for i in range(len(self.Q)):
             mes.currentMessage(
                 "Updating state (" + str(s1) + ") action (" + str(a) + ") interest from: " + str((self.I)[i][s1][a]))
-
-            if (r[i] < 0):
-                self._updateInterest(i, s1, a)
-
             mes.currentMessage("Updated to: " + str((self.I)[i][s1][a]))
 
             valueNext = self.Q[i][s2][self.policy(s2, i)]
@@ -93,6 +51,21 @@ class qLA():
             (self.Q)[i][s1][a] = memory + learning
 
             mes.setMessage("new state action value")
+
+    def argMaxQ(self, state, rs):
+        V = ((self.Q)[rs]) - np.outer(np.min(self.Q[rs], 1), np.ones(len(self.Q[rs][state])))
+        V /= (np.outer(np.sum(V, 1), np.ones(len(V[state]))))
+
+        max = np.argmax(V[state])
+
+        return (max, (self.Q)[rs][state][max])
+
+    def _val(self, t):
+        return (np.e) ** (
+            ((-(np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t)
+
+    def _invVal(self, t):
+        return 1-self._val(t)
 
     def _setQ(self, rs, r, c):
         max = self.agent.livePar.startQMax
@@ -109,4 +82,57 @@ class qLA():
 
     def __del__(self):
         self.Q = self.I = 0
-        print (self.__class__.__name__, "has been deleted")
+        print(self.__class__.__name__, "has been deleted")
+
+
+class simAnneal(qLA):
+    def _schedule(self, t):
+        val = self._val(t)
+
+        return val if (val > self.agent.livePar.scheduleThresh) else 0
+
+    def policy(self, state, rs):
+        p = self._schedule(self.agent.time)
+        mes.currentMessage("Schedule: " + str(p))
+
+        dice = float(rand.randint(0, 100)) / 100
+
+        if (dice <= p):
+            mes.currentMessage("acting randomly, with p: " + str(dice))
+            return rand.randint(0, 3)
+
+        mes.currentMessage("acting rationally, with p: " + str(dice))
+        return super(simAnneal, self).policy(state, rs)
+
+
+class interestQLA(qLA):
+    def learn(self, transition):
+        super(interestQLA, self).learn(transition)
+        self._updateInterestState(transition)
+
+    def argMaxQ(self, state, rs):
+        boundedInterestes = (self.I)[rs]
+
+        reDimQ = ((self.Q)[rs]) - np.outer(np.min(self.Q[rs], 1), np.ones(len(self.Q[rs][state])))
+        reDimQ /= (np.outer(np.sum(reDimQ, 1), np.ones(len(reDimQ[state]))))
+
+        V = reDimQ + boundedInterestes
+        max = np.argmax(V[state])
+
+        return (max, (self.Q)[rs][state][max])
+
+    def _updateInterestState(self, transition):
+
+        s1 = transition[0][0]
+        a = transition[0][1]
+
+        r = transition[1]
+
+        for i in range(len(r)):
+            if (r[i] < 0):
+                self._updateInterest(i, s1, a)
+
+    def _updateInterest(self, rs, state, action):
+        (self.I)[rs][state][action] *= (np.e) ** (
+        ((-(np.e) ** self.agent.livePar.interestB) * self._invVal(self.agent.time)) / (self.agent.livePar.interestA))
+

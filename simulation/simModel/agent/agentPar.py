@@ -12,8 +12,8 @@ _defSA = 10.0
 _defSB = -1.0
 _defSThresh = 0.001
 
-_defIA = 10.0
-_defIB = -1.0
+_defIA = 100.0
+_defIB = 5.0
 _defIC = 1.0
 _defILowBound = 0.0
 
