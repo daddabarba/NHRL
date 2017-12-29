@@ -30,9 +30,12 @@ class qLA():
         return (max, (self.Q)[rs][state][max])
 
     def _val(self, t):
-        return ((np.e) ** (-(self.agent.livePar.scheduleB))) * (
-            (np.e) ** (
-            (((-(np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t) + (self.agent.livePar.scheduleB)))
+        return (np.e) ** (
+            ((-(np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t)
+
+    def _invVal(self, t):
+        return (np.e) ** (
+            (((np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t) - 1
 
     def _schedule(self, t):
         val = self._val(t)
@@ -41,9 +44,7 @@ class qLA():
         #
 
     def _updateInterest(self, rs, state, action):
-        (self.I)[rs][state][action] *= ((np.e) ** (
-            (-(np.e) ** (self.agent.livePar.interestB)) / (
-            self.agent.livePar.interestA / (self.agent.time ** self.agent.livePar.interestC))))
+        (self.I)[rs][state][action] *= (np.e)**( ((-(np.e)**self.agent.livePar.interestB)*self._invVal(self.agent.time))/(self.agent.livePar.interestA) )
 
     def policy(self, state, rs):
         p = self._schedule(self.agent.time)

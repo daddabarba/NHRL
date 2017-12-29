@@ -68,6 +68,9 @@ class agent:
         if (self.graphic):
             (self.environment).changeBelief()
 
+    def nSteps(self, steps, rs):
+        for i in range(steps): self.act(rs)
+
     def perceive(self):
         return (self.environment).currentPerception()
 

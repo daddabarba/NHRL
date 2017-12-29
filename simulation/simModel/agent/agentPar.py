@@ -8,13 +8,13 @@ import parameters as par
 
 import messages as mes
 
-_defSA = 2.0
-_defSB = 1.0
+_defSA = 10.0
+_defSB = -1.0
 _defSThresh = 0.001
 
-_defIA = 0.02
-_defIB = 1.0
-_defIC = 20.0
+_defIA = 10.0
+_defIB = -1.0
+_defIC = 1.0
 _defILowBound = 0.0
 
 _defLearningRate = 0.2
