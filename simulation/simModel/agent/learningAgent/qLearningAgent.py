@@ -13,10 +13,6 @@ class qLA():
         self.agent = agent
         self._setQ(rs, r, c)
 
-        mes.settingMessage("Action-state interest values table")
-        self.I = (np.zeros((len(self.Q), len(self.Q[0]), len(self.Q[0][0])))) + 1
-        mes.setMessage("Action-state interest values table")
-
     def policy(self, state, rs):
         (a, stateValue) = self.argMaxQ(state, rs)
         mes.currentMessage("evaluating state at: " + str(stateValue) + ", with best action: " + str(a))
@@ -53,12 +49,18 @@ class qLA():
             mes.setMessage("new state action value")
 
     def argMaxQ(self, state, rs):
+        max = np.argmax(self.stateValues(state,rs))
+
+        return (max, self.stateActionValue(state,max, rs))
+
+    def stateValues(self, state, rs):
         V = ((self.Q)[rs]) - np.outer(np.min(self.Q[rs], 1), np.ones(len(self.Q[rs][state])))
         V /= (np.outer(np.sum(V, 1), np.ones(len(V[state]))))
 
-        max = np.argmax(V[state])
+        return V[state]
 
-        return (max, (self.Q)[rs][state][max])
+    def stateActionValue(self, state, action, rs):
+        return (self.Q)[rs][state][action]
 
     def _val(self, t):
         return (np.e) ** (
@@ -106,20 +108,26 @@ class simAnneal(qLA):
 
 
 class interestQLA(qLA):
+    def __init__(self, agent, rs, r, c):
+        super(interestQLA,self).__init__(agent,rs,r,c)
+
+        mes.settingMessage("Action-state interest values table")
+        self.I = (np.zeros((len(self.Q), len(self.Q[0]), len(self.Q[0][0])))) + 1
+        mes.setMessage("Action-state interest values table")
+
     def learn(self, transition):
         super(interestQLA, self).learn(transition)
         self._updateInterestState(transition)
 
     def argMaxQ(self, state, rs):
-        boundedInterestes = (self.I)[rs]
+        boundedInterestes = (self.I)[rs][state]
 
-        reDimQ = ((self.Q)[rs]) - np.outer(np.min(self.Q[rs], 1), np.ones(len(self.Q[rs][state])))
-        reDimQ /= (np.outer(np.sum(reDimQ, 1), np.ones(len(reDimQ[state]))))
+        reDimQ = super(interestQLA, self).stateValues(state,rs)
 
         V = reDimQ + boundedInterestes
-        max = np.argmax(V[state])
+        max = np.argmax(V)
 
-        return (max, (self.Q)[rs][state][max])
+        return (max, super(interestQLA,self).stateActionValue(state,max, rs))
 
     def _updateInterestState(self, transition):
 
