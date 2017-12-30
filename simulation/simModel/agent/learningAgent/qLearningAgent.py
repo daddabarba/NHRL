@@ -146,5 +146,5 @@ class interestQLA(qLA):
 
 
 class qLAIA(simAnneal, interestQLA):
-    def __init__(self):
-        super(qLAIA, self)
+    def __init__(self, agent, rs, r, c):
+        super(qLAIA, self).__init(agent, rs, r, c)
