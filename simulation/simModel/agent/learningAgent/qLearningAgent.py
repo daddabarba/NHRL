@@ -9,9 +9,9 @@ import messages as mes
 
 
 class qLA():
-    def __init__(self, agent, rs, r, c):
+    def __init__(self, agent, rs, nStates, nActions):
         self.agent = agent
-        self._setQ(rs, r, c)
+        self._setQ(rs, nStates, nActions)
 
     def policy(self, state, rs):
         (a, stateValue) = self.argMaxQ(state, rs)
@@ -86,6 +86,9 @@ class qLA():
         self.Q = self.I = 0
         print(self.__class__.__name__, "has been deleted")
 
+class basicQL(qLA):
+    def __init__(self, nStates, nActions):
+        super(basicQL, self).__init__(1,nStates,nActions)
 
 class simAnneal(qLA):
     def _schedule(self, t):
@@ -135,7 +138,6 @@ class interestQLA(qLA):
         a = transition[0][1]
 
         r = transition[1]
-
         for i in range(len(r)):
             if (r[i] < 0):
                 self._updateInterest(i, s1, a)
@@ -147,4 +149,4 @@ class interestQLA(qLA):
 
 class qLAIA(simAnneal, interestQLA):
     def __init__(self, agent, rs, r, c):
-        super(qLAIA, self).__init(agent, rs, r, c)
+        super(qLAIA, self).__init__(agent, rs, r, c)
