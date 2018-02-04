@@ -8,6 +8,9 @@ import parameters as par
 
 import messages as mes
 
+_defBaseReward = -0.04
+_defGoalReward = 10.0
+
 _defSA = 10.0
 _defSB = -1.0
 _defSThresh = 0.001
@@ -30,6 +33,12 @@ def defInput(mes, defVal):
 
 class agentPar:
     def __init__(self):
+        mes.currentMessage("Setting base reward value to " + str(_defBaseReward))
+        self.baseReward = _defBaseReward
+
+        mes.currentMessage("Setting goal reward value to " + str(_defGoalReward))
+        self.goalReward = _defGoalReward
+
         mes.currentMessage("Setting parameter A of scheduling function to " + str(_defSA))
         self.scheduleA = _defSA
 
@@ -64,6 +73,11 @@ class agentPar:
         self.startQMin = _defStartQMin
 
     def printPars(self):
+
+        print("\nReward values:")
+        print("\tbase reward: " + str(self.baseReward))
+        print("\tgoal reward: " + str(self.goalReward))
+
         print("\nScheduling function:")
         print("\tParameter A value of scheduling function: " + str(self.scheduleA))
         print("\tParameter B value of scheduling function: " + str(self.scheduleB))
@@ -84,6 +98,9 @@ class agentPar:
         print("\n")
 
     def resetPars(self):
+        self.baseReward = _defBaseReward
+        self.goalReward = _defGoalReward
+
         self.scheduleA = _defSA
         self.scheduleB = _defSB
         self.scheduleThresh = _defSThresh
@@ -99,6 +116,9 @@ class agentPar:
         self.startQMax = _defStartQMax
 
     def changePars(self):
+        self.baseReward = defInput("Insert base reward value: ", self.baseReward)
+        self.goalReward = defInput("Insert goal reward value: ", self.goalReward)
+
         self.scheduleA = defInput("Insert parameter A of scheduling function: ", self.scheduleA)
         self.scheduleB = defInput("Insert parameter B of scheduling function: ", self.scheduleB)
         self.scheduleThresh = defInput("Insert threshold of scheduling function: ", self.scheduleThresh)
@@ -114,5 +134,5 @@ class agentPar:
         self.startQMin = defInput("Insert minimum starting Q value: ", self.startQMin)
 
     def __del__(self):
-        self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
+        self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
         print (self.__class__.__name__, "has been deleted")

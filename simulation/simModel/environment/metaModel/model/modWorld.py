@@ -87,8 +87,12 @@ class model:
 
     def _setR(self, rewardSetting):
         mes.currentMessage("initializing reward table")
+
         self._sizeRewardSignal = len(rewardSetting)
         self.R = np.zeros((self.numStates, self._sizeRewardSignal))
+
+        if (rewardSetting == []):
+            return
 
         for k in range(self._sizeRewardSignal):
             rewardSet = rewardSetting[k]

@@ -13,7 +13,10 @@ def randCol():
 
 
 class dispWorld:
-    def __init__(self, size, features, startingState, startingBelievedState, maps, ftNames):
+    def __init__(self, size, feat, startingState, startingBelievedState, maps):
+        features = feat[0]
+        ftNames = feat[1]
+
         self.track = par.startingTrack
         self.render = par.startingRender
 

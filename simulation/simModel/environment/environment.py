@@ -6,6 +6,8 @@ sys.path.append('../environment/metaModel/')
 
 sys.path.append('../')
 
+sys.path.append('../../../systemFunctions/')
+
 sys.path.append('../../GUI/')
 sys.path.append('../../../messages/')
 
@@ -21,30 +23,40 @@ import features
 
 import parameters as par
 
+import metaFunctions as meta
+
 import graphic
 import messages as mes
 
-def getFeatDefinitions():
-    namesList = dir(features)
-    namesList = namesList[8:len(namesList)]
 
-    functionsList = []
-    for i in range(len(namesList)):
-        att = getattr(features, namesList[i])
-        if(callable(att)):
-            functionsList.append(att);
+def _getFeaturesMatrix(map, size):
+    (definitions, names) = meta.getFunctionsDefinitions(features)
+    ft = []
 
-    return ( tuple(functionsList), namesList )
+    for i in range(len(definitions)):
+        ft.append([])
+
+
+    for feat in range(len(definitions)):
+
+        for row in range(size[0]):
+            rVec = []
+            for col in range(size[1]):
+                rVec.append(definitions[feat]((row,col), map, size))
+
+            ft[feat].append(rVec)
+
+    return(ft, names)
 
 def _getFeatures(map, size):
-    (definitions, names) = getFeatDefinitions()
+    (definitions, names) = meta.getFunctionsDefinitions(features)
     ft = []
 
     for i in range(len(definitions)):
         ft.append([])
 
     for row in range(size[0]):
-        for col in range(size[0]):
+        for col in range(size[1]):
 
             for feat in range(len(definitions)):
 
@@ -78,14 +90,15 @@ class environment:
         (self.maps) = con._convertLines(self.lines, self.size)
 
         mes.currentMessage("retreiving interest points")
-        (self.features, self.ftNames) = _getFeatures(self.maps, self.size)
+        (self.features, self.ftNames) = _getFeaturesMatrix(self.maps, self.size)
 
         mes.settingMessage("world")
 
         if (startingState == "c" or startingState == "center" or startingState == "centre"):
             startingState = int(((self.size)[0] * (self.size)[1]) / 2 + (self.size)[0] / 2) - 1
 
-        self.world = pdm.stochasticMaze(self.size, self.lines, _preDefRewardSet(self.features), startingState)
+        #self.world = pdm.stochasticMaze(self.size, self.lines, _preDefRewardSet(self.features), startingState)
+        self.world = pdm.stochasticMaze(self.size, self.lines, [], startingState)
         mes.setMessage("world")
 
         self.graph = graph
@@ -96,7 +109,7 @@ class environment:
         sbs = (self.world)._invHashFun((self.agent).currentState)
 
         mes.settingMessage("graphic render")
-        self.graphic = graphic.dispWorld(self.size, self.features, ss, sbs, self.maps, self.ftNames)
+        self.graphic = graphic.dispWorld(self.size, _getFeatures(self.maps, self.size), ss, sbs, self.maps)
         mes.setMessage("graphic render")
 
     def performAction(self, action):
@@ -108,6 +121,18 @@ class environment:
 
         if (self.graph):
             (self.graphic)._moveCur(prev, cur)
+
+    def interrogateEnvironment(self, query):
+
+        if(query=="coordinates" or query=="c"):
+            return (self.world)._invHashFun((self.world).currentState)
+
+        elif(query=="stateID" or query=="state" or query=="ID"):
+            return (self.world)._hashFun((self.world).currentState)
+
+        else:
+            loc = (self.world)._invHashFun((self.world).currentState)
+            return ((self.features)[(self.ftNames).index(query)])[loc[0]][loc[1]]
 
     def changeBelief(self):
         prev = (self.world)._invHashFun(((self.agent).stateHistory)[(self.agent).time - 1])
