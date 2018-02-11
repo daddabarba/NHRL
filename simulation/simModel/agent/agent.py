@@ -25,19 +25,26 @@ def attachSensors():
 class agent:
     def __init__(self, startingState="c", environment="../../files/maze.txt", graphic=1):
 
-        mes.currentMessage("environment")
-        self.environment = env.environment(environment, self, startingState, graphic)
-
         mes.currentMessage("sensors")
         (self.sensors, self.sensorsNames) = attachSensors()
+
+        mes.currentMessage("environment")
+        self.environment = env.environment(environment, self, startingState, graphic)
 
         mes.settingMessage("live parameters")
         self.livePar = par.agentPar()
         mes.setMessage("live parameters")
 
+
+        self.problemStateDefinition = ["gps"]
+        self.goalStateDefinition = ["exitDetector", "foodDetector", "waterDetector", "impassDetector", "crossRoadDetector"]
+
+
         mes.currentMessage("initializing starting internal state")
-        self.currentState = (self.perceive())[(self.sensorsNames).index("gps")]        #PARAMETRIZE
-        rs = len(self.sensors) - 1                             #PARAMETRIZE
+        perception = self.perceive()
+        self.currentState = self.splitInternalState(perception, self.problemStateDefinition)        #PARAMETRIZE
+        currentGState = self.splitInternalState(perception, self.goalStateDefinition)
+        rs = len(currentGState)                             #PARAMETRIZE
 
         self._setHistory()
 
@@ -50,7 +57,7 @@ class agent:
 
         if (self.graphic):
             mes.currentMessage("initializing render")
-            self.environment._initGraph()
+            self.environment._initGraph(self.goalStateDefinition)
 
     def act(self, rs):
         mes.currentMessage("selecting action according to current beleived state")
@@ -62,11 +69,10 @@ class agent:
 
         mes.currentMessage("perceiving")
         percept = self.perceive() # dependent on current actual state
-        newStateI = (self.sensorsNames).index("gps")       #ADJUST
-        newState = percept[newStateI]
-        percept.remove(percept[newStateI])
-        reward = self.R(percept)
-        (self.sensoryHistory).append(sensors)
+        newState = self.splitInternalState(percept, self.problemStateDefinition)  # PARAMETRIZE
+        newGState = self.splitInternalState(percept, self.goalStateDefinition)
+        reward = self.R(newGState)
+        (self.sensoryHistory).append(percept)
 
         mes.currentMessage("observing transition")
         transition = ((self.currentState, action, newState), reward)
@@ -91,6 +97,7 @@ class agent:
             else:
                 rs.append((self.livePar).baseReward)
 
+        print(rs)
         return rs
 
     def nSteps(self, steps, rs):
@@ -103,10 +110,18 @@ class agent:
         for sens in self.sensors:
             percept += sens((self.environment).interrogateEnvironment)
 
-        return percept;
+        return percept
 
     def mapInternalState(self, sensors):
         return self.environment.world._hashFun(sensors)
+
+    def splitInternalState(self, state, definition):
+        partition = []
+
+        for part in definition:
+            partition.append( state[(self.sensorsNames).index(part)] )
+
+        return partition[0] if len(partition)==1 else  partition
 
     def updatePerceivedTime(self):
         self.time += 1

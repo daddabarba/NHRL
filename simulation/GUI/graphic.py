@@ -13,7 +13,7 @@ def randCol():
 
 
 class dispWorld:
-    def __init__(self, size, feat, startingState, startingBelievedState, maps):
+    def __init__(self, size, feat, startingState, startingBelievedState, maps, sensorsNames):
         features = feat[0]
         ftNames = feat[1]
 
@@ -22,8 +22,10 @@ class dispWorld:
 
         self.fig = plt.figure(figsize=(par.figSize, par.figSize), frameon=False)
         self.figLeg = plt.figure(figsize=(par.figSize/2, par.figSize/2), frameon=False)
+        self.figLeg2 = plt.figure(figsize=(par.figSize/2, par.figSize/2), frameon=False)
 
         self.legend = (self.figLeg).add_subplot(111, aspect='equal')
+        self.legend2 = (self.figLeg2).add_subplot(111, aspect='equal')
         self.ax = (self.fig).add_subplot(111, aspect='equal')
 
 
@@ -97,6 +99,16 @@ class dispWorld:
             (self.legend).add_patch(rect)
 
             (self.legend).text(x+par.legW +(w/4),y+(h/4),ftNames[i] + " (" + str(i) + ")", fontsize = par.fontSize)
+
+            y += (h)
+
+        y = 0.0
+        x = 0.0
+
+        h = float(1) / len(features)
+
+        for i in range(len(sensorsNames)):
+            (self.legend2).text(x+par.legW +(w/4),y+(h/4),sensorsNames[i] + " (" + str(i) + ")", fontsize = par.fontSize)
 
             y += (h)
 
