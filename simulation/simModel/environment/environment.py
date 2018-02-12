@@ -103,13 +103,13 @@ class environment:
 
         self.graph = graph
 
-    def _initGraph(self):
+    def _initGraph(self, sensorsNames):
 
         ss = (self.world)._invHashFun((self.world).currentState)
         sbs = (self.world)._invHashFun((self.agent).currentState)
 
         mes.settingMessage("graphic render")
-        self.graphic = graphic.dispWorld(self.size, _getFeatures(self.maps, self.size), ss, sbs, self.maps)
+        self.graphic = graphic.dispWorld(self.size, _getFeatures(self.maps, self.size), ss, sbs, self.maps, sensorsNames)
         mes.setMessage("graphic render")
 
     def performAction(self, action):
