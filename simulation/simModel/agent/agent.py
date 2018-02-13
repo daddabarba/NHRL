@@ -44,12 +44,12 @@ class agent:
         perception = self.perceive()
         self.currentState = self.splitInternalState(perception, self.problemStateDefinition)        #PARAMETRIZE
         currentGState = self.splitInternalState(perception, self.goalStateDefinition)
-        rs = len(currentGState)                             #PARAMETRIZE
+        self.rsSize = len(currentGState)                             #PARAMETRIZE
 
         self._setHistory()
 
         mes.settingMessage("Action-state values table")
-        self.qAgent = qLA.interestQLA(self,rs, self.environment.world.numStates,  #PARAMETRIZE
+        self.qAgent = qLA.interestQLA(self,self.rsSize, self.environment.world.numStates,  #PARAMETRIZE
                    self.environment.world.numActions)
         mes.setMessage("Action-state values table")
 

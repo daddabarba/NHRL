@@ -130,6 +130,11 @@ class environment:
         elif(query=="stateID" or query=="state" or query=="ID"):
             return (self.world)._hashFun((self.world).currentState)
 
+        elif("Wall" in query):
+            index = (["r","t","l","b"]).index(query[0])
+            loc = (self.world)._invHashFun((self.world).currentState)
+            return self.maps[losc[0]][loc[1]][index]
+
         else:
             loc = (self.world)._invHashFun((self.world).currentState)
             return ((self.features)[(self.ftNames).index(query)])[loc[0]][loc[1]]

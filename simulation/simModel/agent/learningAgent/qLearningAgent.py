@@ -5,12 +5,19 @@ sys.path.append('../../../../messages/')
 import numpy as np
 import random as rand
 
+import LSTM as lstm
+
 import messages as mes
 
+_defRnnSize = 128
 
 class qLA():
     def __init__(self, agent, rs, nStates, nActions):
         self.agent = agent
+
+        self.nStates = nStates
+        self.nActions = nActions
+
         self._setQ(rs, nStates, nActions)
 
     def policy(self, state, rs):
@@ -37,37 +44,39 @@ class qLA():
                 "Updating state (" + str(s1) + ") action (" + str(a) + ") interest from: " + str((self.I)[i][s1][a]))
             mes.currentMessage("Updated to: " + str((self.I)[i][s1][a]))
 
-            valueNext = self.Q[i][s2][self.policy(s2, i)]
+            valueNext = self.stateActionValue(s2,self.policy(s2, i),i) #Q[i][s2][self.policy(s2, i)]
 
             mes.currentMessage("computing new state action value")
-            memory = (_alpha) * ((self.Q)[i][s1][a])
+            memory = (_alpha) * (self.stateActionValue(s1,a,i))  #((self.Q)[i][s1][a])
             learning = (1 - _alpha) * (r[i] + _lambda * (valueNext))
 
             mes.settingMessage("new state action value")
-            (self.Q)[i][s1][a] = memory + learning
+            #(self.Q)[i][s1][a] = memory + learning
+            self.updateQ(s1,a, memory+learning, i)
 
             mes.setMessage("new state action value")
+
+    def updateQ(self, state, action, update, rs):
+        (self.Q)[rs][state][action] = update
 
     def argMaxQ(self, state, rs):
         max = np.argmax(self.stateValues(state,rs))
 
         return (max, self.stateActionValue(state,max, rs))
 
+    '''
     def stateValues(self, state, rs):
         V = ((self.Q)[rs]) - np.outer(np.min(self.Q[rs], 1), np.ones(len(self.Q[rs][state])))
         V /= (np.outer(np.sum(V, 1), np.ones(len(V[state]))))
 
         return V[state]
+    '''
 
     def stateActionValue(self, state, action, rs):
-        return (self.Q)[rs][state][action]
+        return (self.stateValues(state, rs))[action]
 
-    def _val(self, t):
-        return (np.e) ** (
-            ((-(np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t)
-
-    def _invVal(self, t):
-        return 1-self._val(t)
+    def stateValues(self, state, rs):
+        return Q[rs][state]
 
     def _setQ(self, rs, r, c):
         max = self.agent.livePar.startQMax
@@ -78,19 +87,54 @@ class qLA():
         self.Q = ((np.random.rand(rs, r, c)) * len) + min
 
     def reset(self):
-        self._setQ(self.agent.environment.world._sizeRewardSignal, self.agent.environment.world.numStates,
-                   self.agent.environment.world.numActions)
-        self.I = (np.zeros((len(self.Q), len(self.Q[0]), len(self.Q[0][0])))) + 1
+        self._setQ(self.agent.rsSize, self.nStates,
+                   self.nActions)
+        #self.I = (np.zeros((len(self.Q), len(self.Q[0]), len(self.Q[0][0])))) + 1
 
     def __del__(self):
         self.Q = self.I = 0
         print(self.__class__.__name__, "has been deleted")
 
-class basicQL(qLA):
-    def __init__(self, nStates, nActions):
-        super(basicQL, self).__init__(1,nStates,nActions)
 
+
+class basicQL(qLA):
+    def __init__(self, agent, nStates, nActions):
+        super(basicQL, self).__init__(agent,1,nStates,nActions)
+
+
+
+class neuralQL(qLA):
+    def __init__(self, agent, rs, stateSize, nActions):
+        super(neuralQL, self).__init__(agent, rs, stateSize, nActions)
+
+    def updateQ(self, state, action, update, rs):
+        target = self.stateValues(state, rs)
+        target[action] = update
+
+        ((self.Q)[rs]).train_neural_network(state, target)
+
+    def stateValues(self, state, rs):
+        ((self.Q)[rs]).getLasPrediction(input=state)
+
+    def _setQ(self, rs, stateSize, nActions):
+        self.Q = []
+
+        for i in range(rs):
+            (self.Q).append(lstm.LSTM(stateSize, _defRnnSize, nActions))
+
+
+
+#############
+#EXPLORATION#
+#############
 class simAnneal(qLA):
+    def _val(self, t):
+        return (np.e) ** (
+            ((-(np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t)
+
+    def _invVal(self, t):
+        return 1 - self._val(t)
+
     def _schedule(self, t):
         val = self._val(t)
 
@@ -146,6 +190,9 @@ class interestQLA(qLA):
         (self.I)[rs][state][action] *= (np.e) ** (
         ((-(np.e) ** self.agent.livePar.interestB) * self._invVal(self.agent.time)) / (self.agent.livePar.interestA))
 
+    def reset(self):
+        super(interestQLA, self).reset()
+        # self.I = (np.zeros((len(self.Q), len(self.Q[0]), len(self.Q[0][0])))) + 1
 
 class qLAIA(simAnneal, interestQLA):
     def __init__(self, agent, rs, r, c):
