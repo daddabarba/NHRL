@@ -36,21 +36,20 @@ class agent:
         mes.setMessage("live parameters")
 
 
-        self.problemStateDefinition = ["gps"]
-        self.goalStateDefinition = ["exitDetector", "foodDetector", "waterDetector", "impassDetector", "crossRoadDetector"]
+        self.problemStateDefinition = ["leftWall", "rightWall", "topWall", "bottomWall"]
+        self.goalStateDefinition = ["exitDetector"]
 
 
         mes.currentMessage("initializing starting internal state")
         perception = self.perceive()
         self.currentState = self.splitInternalState(perception, self.problemStateDefinition)        #PARAMETRIZE
         currentGState = self.splitInternalState(perception, self.goalStateDefinition)
-        self.rsSize = len(currentGState)                             #PARAMETRIZE
+        self.rsSize = 1 if not isinstance(currentGState,list) else len(currentGState)                             #PARAMETRIZE
 
         self._setHistory()
 
         mes.settingMessage("Action-state values table")
-        self.qAgent = qLA.interestQLA(self,self.rsSize, self.environment.world.numStates,  #PARAMETRIZE
-                   self.environment.world.numActions)
+        self.qAgent = qLA.neuralSimAnneal(self,self.rsSize, len(self.problemStateDefinition), self.environment.world.numActions)
         mes.setMessage("Action-state values table")
 
         self.graphic = graphic
@@ -73,6 +72,8 @@ class agent:
         newGState = self.splitInternalState(percept, self.goalStateDefinition)
         reward = self.R(newGState)
         (self.sensoryHistory).append(percept)
+        mes.currentMessage("Reward:" + str(reward))
+
 
         mes.currentMessage("observing transition")
         transition = ((self.currentState, action, newState), reward)
@@ -86,18 +87,24 @@ class agent:
         self.currentState = newState
         mes.setMessage("current believed state to (" + str(self.currentState) + ")")
 
-        if (self.graphic):
-            (self.environment).changeBelief()
+        #if (self.graphic):
+            #(self.environment).changeBelief()
 
     def R(self, goalDetection):
         rs = []
-        for i in goalDetection:
-            if(i):
+
+        if isinstance(goalDetection, list):
+            for i in goalDetection:
+                if(i):
+                    rs.append((self.livePar).goalReward)
+                else:
+                    rs.append((self.livePar).baseReward)
+        else:
+            if (goalDetection):
                 rs.append((self.livePar).goalReward)
             else:
                 rs.append((self.livePar).baseReward)
 
-        print(rs)
         return rs
 
     def nSteps(self, steps, rs):
@@ -119,7 +126,7 @@ class agent:
         partition = []
 
         for part in definition:
-            partition.append( state[(self.sensorsNames).index(part)] )
+            partition.append( 1 if state[(self.sensorsNames).index(part)] else 0)
 
         return partition[0] if len(partition)==1 else  partition
 

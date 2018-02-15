@@ -1,7 +1,16 @@
 import secSensors as sec
 
-def gps(fun):
-    return [fun("ID")]
+def leftWall(fun):
+    return [fun("lWall")]
+
+def rightWall(fun):
+    return [fun("rWall")]
+
+def topWall(fun):
+    return [fun("tWall")]
+
+def bottomWall(fun):
+    return [fun("bWall")]
 
 def exitDetector(fun):
     return [fun("isExit")]

@@ -106,11 +106,14 @@ class environment:
     def _initGraph(self, sensorsNames):
 
         ss = (self.world)._invHashFun((self.world).currentState)
-        sbs = (self.world)._invHashFun((self.agent).currentState)
+        sbs = (self.world)._invHashFun((self.agent.environment).interrogateEnvironment("ID"))
 
         mes.settingMessage("graphic render")
         self.graphic = graphic.dispWorld(self.size, _getFeatures(self.maps, self.size), ss, sbs, self.maps, sensorsNames)
         mes.setMessage("graphic render")
+
+    def pullUpAgent(self):
+        (self.world)._resetModel()
 
     def performAction(self, action):
         prev = (self.world)._invHashFun((self.world).currentState)
@@ -133,7 +136,7 @@ class environment:
         elif("Wall" in query):
             index = (["r","t","l","b"]).index(query[0])
             loc = (self.world)._invHashFun((self.world).currentState)
-            return self.maps[losc[0]][loc[1]][index]
+            return self.maps[loc[0]][loc[1]][index]
 
         else:
             loc = (self.world)._invHashFun((self.world).currentState)

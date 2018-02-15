@@ -40,9 +40,11 @@ class qLA():
         _lambda = self.agent.livePar.discountFactor
 
         for i in range(len(self.Q)):
+            '''
             mes.currentMessage(
                 "Updating state (" + str(s1) + ") action (" + str(a) + ") interest from: " + str((self.I)[i][s1][a]))
             mes.currentMessage("Updated to: " + str((self.I)[i][s1][a]))
+            '''
 
             valueNext = self.stateActionValue(s2,self.policy(s2, i),i) #Q[i][s2][self.policy(s2, i)]
 
@@ -73,7 +75,7 @@ class qLA():
     '''
 
     def stateActionValue(self, state, action, rs):
-        return (self.stateValues(state, rs))[action]
+        return  (self.stateValues(state, rs))[action]
 
     def stateValues(self, state, rs):
         return Q[rs][state]
@@ -114,7 +116,7 @@ class neuralQL(qLA):
         ((self.Q)[rs]).train_neural_network(state, target)
 
     def stateValues(self, state, rs):
-        ((self.Q)[rs]).getLasPrediction(input=state)
+        return (((self.Q)[rs]).getLastPrediction(input=state) )
 
     def _setQ(self, rs, stateSize, nActions):
         self.Q = []
@@ -129,7 +131,7 @@ class neuralQL(qLA):
 #############
 class simAnneal(qLA):
     def _val(self, t):
-        return (np.e) ** (
+        return (
             ((-(np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t)
 
     def _invVal(self, t):
@@ -197,3 +199,7 @@ class interestQLA(qLA):
 class qLAIA(simAnneal, interestQLA):
     def __init__(self, agent, rs, r, c):
         super(qLAIA, self).__init__(agent, rs, r, c)
+
+class neuralSimAnneal(simAnneal, neuralQL):
+    def __init__(self, agent, rs, r, c):
+        super(neuralSimAnneal, self).__init__(agent, rs, r, c)

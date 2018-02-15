@@ -86,7 +86,7 @@ class LSTM():
 
         return (self.sess).run([self.prediction], feed_dict)
 
-    def getLasPrediction(self, input=None):
+    def getLastPrediction(self, input=None):
         return (self.predict(input))[-1][-1]
 
     def getState(self):
