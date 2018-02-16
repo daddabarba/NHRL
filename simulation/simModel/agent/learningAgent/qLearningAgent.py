@@ -20,7 +20,7 @@ class qLA():
 
         self._setQ(rs, nStates, nActions)
 
-    def policy(self, state, rs):
+    def policy(self, state, rs, learning=False):
         (a, stateValue) = self.argMaxQ(state, rs)
         mes.currentMessage("evaluating state at: " + str(stateValue) + ", with best action: " + str(a))
 
@@ -46,7 +46,7 @@ class qLA():
             mes.currentMessage("Updated to: " + str((self.I)[i][s1][a]))
             '''
 
-            valueNext = self.stateActionValue(s2,self.policy(s2, i),i) #Q[i][s2][self.policy(s2, i)]
+            valueNext = self.stateActionValue(s2,self.policy(s2, i, learning=True),i) #Q[i][s2][self.policy(s2, i)]
 
             mes.currentMessage("computing new state action value")
             memory = (_alpha) * (self.stateActionValue(s1,a,i))  #((self.Q)[i][s1][a])
@@ -131,8 +131,7 @@ class neuralQL(qLA):
 #############
 class simAnneal(qLA):
     def _val(self, t):
-        return (
-            ((-(np.e) ** (self.agent.livePar.scheduleB)) / (self.agent.livePar.scheduleA)) * t)
+        return np.e**(self.agent.livePar.scheduleA - (np.e**self.agent.livePar.scheduleB)*t)
 
     def _invVal(self, t):
         return 1 - self._val(t)
@@ -142,13 +141,13 @@ class simAnneal(qLA):
 
         return val if (val > self.agent.livePar.scheduleThresh) else 0
 
-    def policy(self, state, rs):
+    def policy(self, state, rs, learning=False):
         p = self._schedule(self.agent.time)
         mes.currentMessage("Schedule: " + str(p))
 
         dice = float(rand.randint(0, 100)) / 100
 
-        if (dice <= p):
+        if (dice <= p and not learning):
             mes.currentMessage("acting randomly, with p: " + str(dice))
             return rand.randint(0, 3)
 

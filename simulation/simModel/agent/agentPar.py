@@ -11,8 +11,8 @@ import messages as mes
 _defBaseReward = -0.04
 _defGoalReward = 100.0
 
-_defSA = -1.0
-_defSB = 4.0
+_defSA = 4.5
+_defSB = -4.5
 _defSThresh = 0.001
 
 _defIA = 100.0

@@ -120,4 +120,5 @@ plt.savefig(path + 'timePlot.png')
 plt.clf()
 
 plt.plot(pU)
+plt.draw()
 plt.savefig(path + 'visaUsePlot.png')
