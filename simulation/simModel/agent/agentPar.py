@@ -8,10 +8,10 @@ import parameters as par
 
 import messages as mes
 
-_defBaseReward = -0.04
+_defBaseReward = -0.4
 _defGoalReward = 100.0
 
-_defSA = 4.5
+_defSA = 10
 _defSB = -4.5
 _defSThresh = 0.001
 
@@ -20,8 +20,10 @@ _defIB = 5.0
 _defIC = 1.0
 _defILowBound = 0.0
 
-_defLearningRate = 0.2
+_defLearningRate = 0.0
 _defDiscountFactor = 0.98
+
+_defNeuralLearningRate = -1
 
 _defStartQMin = 2 * par.baseReward * (-1 if par.baseReward > 0 else 1)
 _defStartQMax = _defStartQMin * (-1)
@@ -66,6 +68,9 @@ class agentPar:
         mes.currentMessage("Setting discount factor to: " + str(_defDiscountFactor))
         self.discountFactor = _defDiscountFactor
 
+        mes.currentMessage("Setting discount factor to: " + str(_defNeuralLearningRate))
+        self.neuralLearningRate = _defNeuralLearningRate
+
         mes.currentMessage("Setting maximum starting Q value to " + str(_defStartQMax))
         self.startQMax = _defStartQMax
 
@@ -88,6 +93,9 @@ class agentPar:
         print("\tDiscount factor value: " + str(self.discountFactor))
         print("\tMaximum starting Q value: " + str(self.startQMax))
         print("\tMinimum starting Q value: " + str(self.startQMin))
+
+        print("\nLSTM model:")
+        print("\tLearning rate value: " + str(self.neuralLearningRate))
 
         print("\nInterest value update rule")
         print("\tParameter A value of interest update rule: " + str(self.interestA))
@@ -115,6 +123,8 @@ class agentPar:
         self.startQMin = _defStartQMin
         self.startQMax = _defStartQMax
 
+        self.neuralLearningRate = _defNeuralLearningRate
+
     def changePars(self):
         self.baseReward = defInput("Insert base reward value: ", self.baseReward)
         self.goalReward = defInput("Insert goal reward value: ", self.goalReward)
@@ -133,6 +143,8 @@ class agentPar:
         self.startQMax = defInput("Insert maximum starting Q value: ", self.startQMax)
         self.startQMin = defInput("Insert minimum starting Q value: ", self.startQMin)
 
+        self.neuralLearningRate = defInput("Insert learning rate value: ", self.neuralLearningRate)
+
     def __del__(self):
-        self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
+        self.neuralLearningRate = self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
         print (self.__class__.__name__, "has been deleted")

@@ -122,7 +122,7 @@ class neuralQL(qLA):
         self.Q = []
 
         for i in range(rs):
-            (self.Q).append(lstm.LSTM(stateSize, _defRnnSize, nActions))
+            (self.Q).append(lstm.LSTM(stateSize, _defRnnSize, nActions, self.agent.livePar.neuralLearningRate))
 
 
 

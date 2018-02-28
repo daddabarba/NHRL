@@ -8,7 +8,7 @@ import numpy as np
 # import rnnPar as par
 
 class LSTM():
-    def __init__(self, input_size, rnn_size, output_size):
+    def __init__(self, input_size, rnn_size, output_size, alpha):
         # setting hyperparameters
         self.input_size = input_size
         self.output_size = output_size
@@ -30,7 +30,10 @@ class LSTM():
         # setting cost function (in function of prediction and output placeholder for target values)
         self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.prediction, labels=self.yPH))
         # setting optimizer
-        self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
+        if alpha>0:
+            self.optimizer = tf.train.AdamOptimizer(learning_rate=alpha).minimize(self.cost)
+        else:
+            self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
 
         # starting session
         self.sess = tf.Session()
