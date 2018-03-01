@@ -36,20 +36,19 @@ class agent:
         mes.setMessage("live parameters")
 
 
-        self.problemStateDefinition = ["leftWall", "rightWall", "topWall", "bottomWall"]
+        self.problemStateDefinition = ["leftWall", "rightWall", "topWall", "bottomWall", "previousAction"]
         self.goalStateDefinition = ["exitDetector"]
-
-
-        mes.currentMessage("initializing starting internal state")
-        perception = self.perceive()
-        self.currentState = self.splitInternalState(perception, self.problemStateDefinition)        #PARAMETRIZE
-        currentGState = self.splitInternalState(perception, self.goalStateDefinition)
-        self.rsSize = 1 if not isinstance(currentGState,list) else len(currentGState)                             #PARAMETRIZE
 
         self._setHistory()
 
+
+        mes.currentMessage("initializing starting internal state")
+        self.currentState = self.perceive(self.problemStateDefinition)        #PARAMETRIZE
+        currentGState = self.perceive(self.goalStateDefinition)
+        self.rsSize = 1 if not isinstance(currentGState,list) else len(currentGState)                             #PARAMETRIZE
+
         mes.settingMessage("Action-state values table")
-        self.qAgent = qLA.neuralSimAnneal(self,self.rsSize, len(self.problemStateDefinition), self.environment.world.numActions)
+        self.qAgent = qLA.neuralSimAnneal(self,self.rsSize, len(self.currentState), self.environment.world.numActions)
         mes.setMessage("Action-state values table")
 
         self.graphic = graphic
@@ -67,11 +66,11 @@ class agent:
         self.updatePerceivedTime()
 
         mes.currentMessage("perceiving")
-        percept = self.perceive() # dependent on current actual state
-        newState = self.splitInternalState(percept, self.problemStateDefinition)  # PARAMETRIZE
-        newGState = self.splitInternalState(percept, self.goalStateDefinition)
+        newState = self.perceive(self.problemStateDefinition)  # PARAMETRIZE
+        print("current problem state: " + str(newState))
+        newGState = self.perceive(self.goalStateDefinition)
         reward = self.R(newGState)
-        (self.sensoryHistory).append(percept)
+        (self.sensoryHistory).append(newState+newGState)
         mes.currentMessage("Reward:" + str(reward))
 
 
@@ -110,18 +109,20 @@ class agent:
     def nSteps(self, steps, rs):
         for i in range(steps): self.act(rs)
 
-    def perceive(self):
+    def perceive(self, definition):
         #return (self.environment).currentPerception()
         percept = []
 
-        for sens in self.sensors:
-            percept += sens((self.environment).interrogateEnvironment)
+        for name in definition:
+            sens = self.sensors[(self.sensorsNames).index(name)]
+            percept += sens((self.environment).interrogateEnvironment, self)
 
-        return percept
+        return list(map(int,percept))
 
     def mapInternalState(self, sensors):
         return self.environment.world._hashFun(sensors)
 
+    '''
     def splitInternalState(self, state, definition):
         partition = []
 
@@ -129,6 +130,7 @@ class agent:
             partition.append( 1 if state[(self.sensorsNames).index(part)] else 0)
 
         return partition[0] if len(partition)==1 else  partition
+    '''
 
     def updatePerceivedTime(self):
         self.time += 1

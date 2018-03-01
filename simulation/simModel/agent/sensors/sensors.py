@@ -1,28 +1,40 @@
 import secSensors as sec
 
-def leftWall(fun):
+def leftWall(fun, intro):
     return [fun("lWall")]
 
-def rightWall(fun):
+def rightWall(fun, intro):
     return [fun("rWall")]
 
-def topWall(fun):
+def topWall(fun, intro):
     return [fun("tWall")]
 
-def bottomWall(fun):
+def bottomWall(fun, intro):
     return [fun("bWall")]
 
-def exitDetector(fun):
+def exitDetector(fun, intro):
     return [fun("isExit")]
 
-def waterDetector(fun):
+def waterDetector(fun, intro):
     return [fun("isWater")]
 
-def impassDetector(fun):
+def impassDetector(fun, intro):
     return [fun("isImpass")]
 
-def foodDetector(fun):
+def foodDetector(fun, intro):
     return [fun("isFood")]
 
-def crossRoadDetector(fun):
+def crossRoadDetector(fun, intro):
     return [fun("isCrossRoad")]
+
+def previousAction(fun, intro):
+
+    if intro.transitionHistory!=[]:
+        action = (intro.transitionHistory[-1])[0][1]
+
+        ret = [0]*4
+        ret[action] = 1
+    else:
+        return [0]*4
+
+    return ret
