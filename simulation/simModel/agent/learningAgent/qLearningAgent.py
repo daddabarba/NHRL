@@ -154,6 +154,32 @@ class simAnneal(qLA):
         mes.currentMessage("acting rationally, with p: " + str(dice))
         return super(simAnneal, self).policy(state, rs)
 
+class boltzmann(simAnneal):
+    def _val(self, t):
+        return np.e**(self.agent.livePar.scheduleA - (np.e**self.agent.livePar.scheduleB)*t)
+
+    def _invVal(self, t):
+        return 1 - self._val(t)
+
+    def _schedule(self, t):
+        val = self._val(t)
+
+        return val if (val > self.agent.livePar.scheduleThresh) else self.agent.livePar.scheduleThresh
+
+    def getPDist(self, state, rs):
+        values = np.power(np.e,self.stateValues(state,rs)/self._val(self.agent.time))
+        return values/(values.sum())
+
+    def policy(self, state, rs, learning=False):
+        probabilities = self.getPDist(state,rs)
+        dice = rand.uniform(a=0.0, b=1.0)
+
+        for i in range(len(probabilities)):
+            if dice<=probabilities[i]:
+                return i
+            dice -= probabilities[i]
+
+        return rand.randint(0,len(probabilities)-1)
 
 class interestQLA(qLA):
     def __init__(self, agent, rs, r, c):
@@ -202,3 +228,9 @@ class qLAIA(simAnneal, interestQLA):
 class neuralSimAnneal(simAnneal, neuralQL):
     def __init__(self, agent, rs, r, c):
         super(neuralSimAnneal, self).__init__(agent, rs, r, c)
+
+class neuralBoltzmann(boltzmann, neuralQL):
+    def __init__(self, agent, rs, r, c):
+        super(neuralBoltzmann, self).__init__(agent, rs, r, c)
+
+
