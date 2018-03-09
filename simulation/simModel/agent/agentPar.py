@@ -13,7 +13,7 @@ _defGoalReward = 100.0
 
 _defSA = 10
 _defSB = -4.5
-_defSThresh = 45.0
+_defSThresh = 285.0
 
 _defHeight = 40.0
 _defLowerBound = 5.0
