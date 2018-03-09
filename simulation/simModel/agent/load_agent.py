@@ -11,6 +11,10 @@ else:
 
 nSteps = 500
 
-while nSteps > 0:
-    nSteps = defInput("Insert number of steps: ", nSteps)
-    a.nSteps(nSteps,0)
+def seqActions():
+    while nSteps > 0:
+        nSteps = defInput("Insert number of steps: ", nSteps)
+        a.nSteps(nSteps,0)
+
+
+seqActions()
