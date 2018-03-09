@@ -157,4 +157,5 @@ class agent:
 
     def __del__(self):
         self.currentState = self.sensoryHistory = self.transitionHistory = self.time = 0
+        del self.qAgent
         print (self.__class__.__name__, "has been deleted")

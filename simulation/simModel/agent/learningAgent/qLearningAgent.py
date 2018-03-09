@@ -156,15 +156,11 @@ class simAnneal(qLA):
 
 class boltzmann(simAnneal):
     def _val(self, t):
-        return np.e**(self.agent.livePar.scheduleA - (np.e**self.agent.livePar.scheduleB)*t)
+        #return np.e**(self.agent.livePar.scheduleA - (np.e**self.agent.livePar.scheduleB)*t) + self.agent.livePar.scheduleThresh
+        return self.agent.livePar.scheduleThresh
 
     def _invVal(self, t):
         return 1 - self._val(t)
-
-    def _schedule(self, t):
-        val = self._val(t)
-
-        return val if (val > self.agent.livePar.scheduleThresh) else self.agent.livePar.scheduleThresh
 
     def getPDist(self, state, rs):
         values = np.power(np.e,self.stateValues(state,rs)/self._val(self.agent.time))
@@ -175,6 +171,9 @@ class boltzmann(simAnneal):
         dice = rand.uniform(a=0.0, b=1.0)
 
         for i in range(len(probabilities)):
+            if probabilities[i]==float('inf'):
+                sys.exit("Infinity encountered at" + str(self.agent.time))
+
             if dice<=probabilities[i]:
                 return i
             dice -= probabilities[i]
