@@ -8,7 +8,7 @@ import numpy as np
 # import rnnPar as par
 
 class LSTM():
-    def __init__(self, input_size, rnn_size, output_size, alpha):
+    def __init__(self, input_size, rnn_size, output_size, alpha, session=-1):
         # setting hyperparameters
         self.input_size = input_size
         self.output_size = output_size
@@ -36,7 +36,11 @@ class LSTM():
             self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
 
         # starting session
-        self.sess = tf.Session()
+        if session == -1:
+            self.sess = tf.Session()
+        else:
+            self.sess = session
+
         (self.sess).run(tf.global_variables_initializer())
 
     # reshapres input tensors to the correct format
