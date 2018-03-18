@@ -40,13 +40,8 @@ class qLA():
         _lambda = self.agent.livePar.discountFactor
 
         for i in range(len(self.Q)):
-            '''
-            mes.currentMessage(
-                "Updating state (" + str(s1) + ") action (" + str(a) + ") interest from: " + str((self.I)[i][s1][a]))
-            mes.currentMessage("Updated to: " + str((self.I)[i][s1][a]))
-            '''
 
-            valueNext = self.stateActionValue(s2,self.policy(s2, i, learning=True),i) #Q[i][s2][self.policy(s2, i)]
+            valueNext = self.stateValue(s2,i) #Q[i][s2][self.policy(s2, i)]
 
             mes.currentMessage("computing new state action value")
             memory = (_alpha) * (self.stateActionValue(s1,a,i))  #((self.Q)[i][s1][a])
@@ -66,13 +61,8 @@ class qLA():
 
         return (max, self.stateActionValue(state,max, rs))
 
-    '''
-    def stateValues(self, state, rs):
-        V = ((self.Q)[rs]) - np.outer(np.min(self.Q[rs], 1), np.ones(len(self.Q[rs][state])))
-        V /= (np.outer(np.sum(V, 1), np.ones(len(V[state]))))
-
-        return V[state]
-    '''
+    def stateValue(self, state, rs):
+        return self.stateActionValue(state,self.policy(state, rs, learning=True),rs)
 
     def stateActionValue(self, state, action, rs):
         return  (self.stateValues(state, rs))[action]
@@ -165,6 +155,9 @@ class boltzmann(simAnneal):
     def getPDist(self, state, rs):
         values = np.power(np.e,self.stateValues(state,rs)/self._val(self.agent.time))
         return values/(values.sum())
+
+    def stateValue(self, state, rs):
+        return (self.getPDist(state, rs)*self.stateValues(state,rs)).sum();
 
     def policy(self, state, rs, learning=False):
         probabilities = self.getPDist(state,rs)
