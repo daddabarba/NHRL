@@ -146,11 +146,8 @@ class simAnneal(qLA):
 
 class boltzmann(simAnneal):
     def _val(self, t):
-        #return np.e**(self.agent.livePar.scheduleA - (np.e**self.agent.livePar.scheduleB)*t) + self.agent.livePar.scheduleThresh
-        return self.agent.livePar.scheduleThresh
-
-    def _invVal(self, t):
-        return 1 - self._val(t)
+        t = self.agent.livePar.startPoint - self.agent.livePar.speed*t
+        return ((np.e**t)/((np.e**t)+1))*self.agent.livePar.height + self.agent.livePar.lowBound
 
     def getPDist(self, state, rs):
         values = np.power(np.e,self.stateValues(state,rs)/self._val(self.agent.time))
