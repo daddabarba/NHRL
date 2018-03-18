@@ -84,6 +84,12 @@ for testNIter in range(testN,testN+nExperiments):
     params.write("\tMaximum starting Q value: " + str(a.livePar.startQMax) + "\n")
     params.write("\tMinimum starting Q value: " + str(a.livePar.startQMin) + "\n")
 
+    params.write("\nSoftmax exploration values:\n")
+    params.write("\tsoftmax exp. schedule f. height" + str(a.livePar.height) + "\n")
+    params.write("\tsoftmax exp. schedule f. low bound" + str(a.livePar.lowBound) + "\n")
+    params.write("\tsoftmax exp. schedule f. speed" + str(a.livePar.speed))
+    params.write("\tsoftmax exp. schedule f. starting point" + str(a.livePar.startPoint) + "\n")
+
     params.close()
 
     pT = []
