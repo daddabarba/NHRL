@@ -27,8 +27,12 @@ _defVisa = 1
 _testDirPath = 'tests/'
 
 
-def defInput(mes, defVal):
-    return int(input("(" + str(defVal) + ") - " + mes) or str(defVal))
+def defInput(mes, defVal, string=False):
+    _in = input("(" + str(defVal) + ") - " + mes) or str(defVal)
+    if string:
+        return _in
+
+    return int(_in)
 
 
 dirName = "_".join((input("Insert test folder name: ")).split())
@@ -38,6 +42,8 @@ nExperiments = defInput("Insert number of experiments: ", 1)
 
 iterations = defInput("Insert number of iterations: ", _defIter)
 visa = defInput("Insert visa value (extra time after goal is found): ", _defVisa)
+
+mazeName = defInput("Insert maze name: ", "maze.txt", string=True)
 
 testN = 1
 while (os.path.exists(_testDirPath + '_' + str(testN))):
@@ -55,7 +61,7 @@ for testNIter in range(testN,testN+nExperiments):
 
     print("result files generated")
 
-    a = agent.agent(environment = "../simulation/files/maze20.txt" ,graphic=0)
+    a = agent.agent(environment = "../simulation/files/" + str(mazeName) ,graphic=0)
 
     params = open(path + 'parameters.txt', 'w')
 
