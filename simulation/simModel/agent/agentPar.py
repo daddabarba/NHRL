@@ -16,7 +16,9 @@ _defSB = -4.5
 _defSThresh = 285.0
 
 _defHeight = 40.0
-_defLowerBound = 5.0
+_defLowerBound = 10.0
+_defStartPoint = 22
+_defSpeed = 0.1
 
 _defIA = 100.0
 _defIB = 5.0
@@ -80,6 +82,18 @@ class agentPar:
         mes.currentMessage("Setting minimum starting Q value to " + str(_defStartQMin))
         self.startQMin = _defStartQMin
 
+        mes.currentMessage("Setting softmax exp. schedule f. height " + str(_defHeight))
+        self.height = _defHeight
+
+        mes.currentMessage("Setting softmax exp. schedule f. low bound " + str(_defLowerBound))
+        self.lowBound = _defLowerBound
+
+        mes.currentMessage("Setting softmax exp. schedule f. speed " + str(_defSpeed))
+        self.speed = _defSpeed
+
+        mes.currentMessage("Setting softmax exp. schedule f. start point " + str(_defStartPoint))
+        self.startPoint = _defStartPoint
+
     def printPars(self):
 
         print("\nReward values:")
@@ -106,6 +120,12 @@ class agentPar:
         print("\tParameter C value of interest update rule: " + str(self.interestC))
         print("\tLow bound value of interest update rule: " + str(self.iLowBound))
 
+        print("\nSoftmax exploration values:")
+        print("\tsoftmax exp. schedule f. height" + str(self.height))
+        print("\tsoftmax exp. schedule f. low bound" + str(self.lowBound))
+        print("\tsoftmax exp. schedule f. speed" + str(self.speed))
+        print("\tsoftmax exp. schedule f. starting point" + str(self.startPoint))
+
         print("\n")
 
     def resetPars(self):
@@ -128,6 +148,11 @@ class agentPar:
 
         self.neuralLearningRate = _defNeuralLearningRate
 
+        self.height = _defHeight
+        self.startPoint = _defStartPoint
+        self.lowBound = _defLowerBound
+        self.speed = _defSpeed
+
     def changePars(self):
         self.baseReward = defInput("Insert base reward value: ", self.baseReward)
         self.goalReward = defInput("Insert goal reward value: ", self.goalReward)
@@ -148,6 +173,11 @@ class agentPar:
 
         self.neuralLearningRate = defInput("Insert learning rate value: ", self.neuralLearningRate)
 
+        self.height = defInput("Insert softmax exp. schedule f. height", self.height)
+        self.speed = defInput("Insert softmax exp. schedule f. height", self.speed)
+        self.lowBound = defInput("Insert softmax exp. schedule f. height", self.lowBound)
+        self.startPoint = defInput("Insert softmax exp. schedule f. height", self.startPoint)
+
     def __del__(self):
-        self.neuralLearningRate = self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
+        self.speed = self.height = self.lowBound = self.startPoint = self.neuralLearningRate = self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
         print (self.__class__.__name__, "has been deleted")
