@@ -15,10 +15,10 @@ _defSA = 10
 _defSB = -4.5
 _defSThresh = 285.0
 
-_defHeight = 40.0
-_defLowerBound = 10.0
-_defStartPoint = 22
-_defSpeed = 0.1
+_defHeight = 15.0
+_defLowerBound = 5.0
+_defStartPoint = 10
+_defSpeed = 0.03
 
 _defIA = 100.0
 _defIB = 5.0
