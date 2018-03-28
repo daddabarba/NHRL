@@ -23,7 +23,9 @@ def attachSensors():
     return meta.getFunctionsDefinitions(sensors)
 
 class agent:
-    def __init__(self, startingState="c", environment="../../files/maze.txt", graphic=1):
+    def __init__(self, startingState="c", environment="../../files/maze.txt", graphic=1, suppressPrint = False):
+
+        mes.suppress = suppressPrint
 
         mes.currentMessage("sensors")
         (self.sensors, self.sensorsNames) = attachSensors()
@@ -67,7 +69,7 @@ class agent:
 
         mes.currentMessage("perceiving")
         newState = self.perceive(self.problemStateDefinition)  # PARAMETRIZE
-        print("current problem state: " + str(newState))
+        mes.message("current problem state: " + str(newState))
         newGState = self.perceive(self.goalStateDefinition)
         reward = self.R(newGState)
         (self.sensoryHistory).append(newState+newGState)
