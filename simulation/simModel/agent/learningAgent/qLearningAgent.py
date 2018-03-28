@@ -116,6 +116,22 @@ class neuralQL(qLA):
 
 
 
+class batchQL(neuralQL):
+    def __init__(self, agent, rs, stateSize, nActions, batchSize):
+        super(batchQL, self).__init__(agent, rs, stateSize, nActions)
+
+        self.batchSize = batchSize
+        self.currentBatch = []
+
+    def learn(self, transition):
+        self.currentBatch.append(transition)
+
+        if len(self.currentBatch)>=self.batchSize:
+            for t in self.currentBatch:
+                super(batchQL, self).learn(t)
+
+            self.currentBatch = []
+
 #############
 #EXPLORATION#
 #############
@@ -210,6 +226,11 @@ class interestQLA(qLA):
         super(interestQLA, self).reset()
         # self.I = (np.zeros((len(self.Q), len(self.Q[0]), len(self.Q[0][0])))) + 1
 
+
+##############################
+#EXPLORATION and EXPLOITATION#
+##############################
+
 class qLAIA(simAnneal, interestQLA):
     def __init__(self, agent, rs, r, c):
         super(qLAIA, self).__init__(agent, rs, r, c)
@@ -221,5 +242,9 @@ class neuralSimAnneal(simAnneal, neuralQL):
 class neuralBoltzmann(boltzmann, neuralQL):
     def __init__(self, agent, rs, r, c):
         super(neuralBoltzmann, self).__init__(agent, rs, r, c)
+
+class batchBoltzmann(boltzmann, batchQL):
+    def __init__(self, agent, rs, r, c, batchSize):
+        super(batchBoltzmann, self).__init__(agent, rs, r, c, batchSize)
 
 

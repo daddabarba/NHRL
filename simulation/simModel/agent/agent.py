@@ -48,7 +48,7 @@ class agent:
         self.rsSize = 1 if not isinstance(currentGState,list) else len(currentGState)                             #PARAMETRIZE
 
         mes.settingMessage("Action-state values table")
-        self.qAgent = qLA.neuralBoltzmann(self,self.rsSize, len(self.currentState), self.environment.world.numActions)
+        self.qAgent = qLA.batchBoltzmann(self,self.rsSize, len(self.currentState), self.environment.world.numActions, self.livePar.batchSize)
         mes.setMessage("Action-state values table")
 
         self.graphic = graphic
