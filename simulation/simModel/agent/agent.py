@@ -124,16 +124,6 @@ class agent:
     def mapInternalState(self, sensors):
         return self.environment.world._hashFun(sensors)
 
-    '''
-    def splitInternalState(self, state, definition):
-        partition = []
-
-        for part in definition:
-            partition.append( 1 if state[(self.sensorsNames).index(part)] else 0)
-
-        return partition[0] if len(partition)==1 else  partition
-    '''
-
     def updatePerceivedTime(self):
         self.time += 1
 
