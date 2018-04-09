@@ -1,28 +1,35 @@
 import sys
 import agent
 
-env = None
-loop = True
+
+class SysPars():
+    def __init__(self):
+        self.env = None
+        self.loop = True
+
+pars = SysPars()
 
 def defInput(mes, defVal):
     return int(input("(" + str(defVal) + ") - " + mes) or str(defVal))
 
-def runPars(i):
+def runPars(pars,i):
     if (sys.argv)[i] == "path":
-        env = (sys.argv)[i+1]
+        pars.env = (sys.argv)[i+1]
     elif (sys.argv)[i] == "loop":
-        loop = True if (sys.argv)[i+1] == "True" else False
+        pars.loop = True if (sys.argv)[i+1] == "True" else False
 
 
 if not len(sys.argv)%2:
-    print "wrong argument format"
+    print ("wrong argument format")
     sys.exit()
 
 for i in range(1,len(sys.argv)-1,2):
-    runPars(i)
+    runPars(pars,i)
 
-if env:
-    a = agent.agent(environment=env)
+print(pars.loop,pars.env)
+
+if pars.env:
+    a = agent.agent(environment=pars.env)
 else:
     a = agent.agent()
 
@@ -33,5 +40,5 @@ def seqActions():
         nSteps = defInput("Insert number of steps: ", nSteps)
         a.nSteps(nSteps,0)
 
-if loop:
+if pars.loop:
     seqActions()
