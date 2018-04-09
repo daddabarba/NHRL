@@ -1,8 +1,8 @@
-#Neural Hierarchical Reinforcement Learning
+# Neural Hierarchical Reinforcement Learning
 
 This project present an implementation of a **Hierarchical Reinforcement Learning** (**HRL**) algoritim, where state-action value functions are learned by a **Long-Short Term Memory** (**LSTM**) **Artificial Neural Network** (**ANN**).
 
-##Python
+## Python
 
 This project was built on **python 3.5.2**. In order to run the following packages are needed:
 
