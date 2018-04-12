@@ -25,7 +25,6 @@ import parameters as par
 
 import metaFunctions as meta
 
-import graphic
 import messages as mes
 
 
@@ -105,6 +104,8 @@ class environment:
 
     def _initGraph(self, sensorsNames):
         if self.graph:
+            import graphic
+
             ss = (self.world)._invHashFun((self.world).currentState)
             sbs = (self.world)._invHashFun((self.agent.environment).interrogateEnvironment("ID"))
 
