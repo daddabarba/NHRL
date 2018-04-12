@@ -5,7 +5,9 @@ import agent
 class SysPars():
     def __init__(self):
         self.env = None
-        self.loop = True
+        self.loop = False
+        self.GUI = True
+        self.noPrint = False
 
 pars = SysPars()
 
@@ -17,6 +19,11 @@ def runPars(pars,i):
         pars.env = (sys.argv)[i+1]
     elif (sys.argv)[i] == "loop":
         pars.loop = True if (sys.argv)[i+1] == "True" else False
+    elif (sys.argv)[i] == "GUI":
+        pars.GUI = True if (sys.argv)[i + 1] == "True" else False
+    elif (sys.argv)[i] == "noPrint":
+        pars.noPrint = True if (sys.argv)[i + 1] == "True" else False
+
 
 
 if not len(sys.argv)%2:
@@ -26,12 +33,10 @@ if not len(sys.argv)%2:
 for i in range(1,len(sys.argv)-1,2):
     runPars(pars,i)
 
-print(pars.loop,pars.env)
-
 if pars.env:
-    a = agent.agent(environment=pars.env)
+    a = agent.agent(environment=pars.env, graphic = pars.GUI, suppressPrint=pars.noPrint)
 else:
-    a = agent.agent()
+    a = agent.agent(graphic = pars.GUI, suppressPrint=pars.noPrint)
 
 def seqActions():
     nSteps = 500
