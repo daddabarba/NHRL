@@ -61,7 +61,7 @@ for testNIter in range(testN,testN+nExperiments):
 
     print("result files generated")
 
-    a = agent.agent(environment = "../simulation/files/" + str(mazeName) ,graphic=0)
+    a = agent.agent(environment = "../simulation/files/" + str(mazeName) ,graphic=0, suppressPrint=False)
 
     params = open(path + 'parameters.txt', 'w')
 

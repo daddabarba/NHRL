@@ -36,6 +36,9 @@ class qLA():
 
         r = transition[1]
 
+        if type(r) == type(0.0):
+            r = [r]*(len(self.Q))
+
         _alpha = self.agent.livePar.learningRate
         _lambda = self.agent.livePar.discountFactor
 

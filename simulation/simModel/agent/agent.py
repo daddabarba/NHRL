@@ -84,7 +84,7 @@ class agent:
 
         (self.stateHistory).append(self.currentState)
 
-        mes.settingMessage("current beleived state from (" + str(self.currentState) + ")")
+        mes.settingMessage("current believed state from (" + str(self.currentState) + ")")
         self.currentState = newState
         mes.setMessage("current believed state to (" + str(self.currentState) + ")")
 
