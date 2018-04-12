@@ -22,6 +22,29 @@ import matplotlib.pyplot as plt
 
 import agent
 
+
+class SysPars():
+    def __init__(self):
+        self.name = None
+        self.nExperiments = None
+        self.iterations = None
+        self.visa = None
+        self.mazeName = None
+
+pars = SysPars()
+
+def runPars(pars,i):
+    if (sys.argv)[i] == "name":
+        pars.name = (sys.argv)[i+1]
+    elif (sys.argv)[i] == "e":
+        pars.nExperiments = int((sys.argv)[i+1])
+    elif (sys.argv)[i] == "n":
+        pars.iterations = int((sys.argv)[i + 1])
+    elif (sys.argv)[i] == "v":
+        pars.visa = int((sys.argv)[i + 1])
+    elif (sys.argv)[i] == "maze":
+        pars.mazeName = "maze.txt" if (sys.argv)[i + 1]=="def" else (sys.argv)[i + 1]
+
 _defIter = 60
 _defVisa = 1
 _testDirPath = 'tests/'
@@ -34,22 +57,32 @@ def defInput(mes, defVal, string=False):
 
     return int(_in)
 
+for i in range(1,len(sys.argv)-1,2):
+    runPars(pars,i)
 
-dirName = "_".join((input("Insert test folder name: ")).split())
+if not pars.name:
+    pars.name = input("Insert test folder name: ")
+
+dirName = "_".join((pars.name).split())
 _testDirPath+=dirName
 
-nExperiments = defInput("Insert number of experiments: ", 1)
+if not pars.nExperiments:
+    pars.nExperiments = defInput("Insert number of experiments: ", 1)
 
-iterations = defInput("Insert number of iterations: ", _defIter)
-visa = defInput("Insert visa value (extra time after goal is found): ", _defVisa)
+if not pars.iterations:
+    pars.iterations = defInput("Insert number of iterations: ", _defIter)
 
-mazeName = defInput("Insert maze name: ", "maze.txt", string=True)
+if not pars.visa:
+    pars.visa = defInput("Insert visa value (extra time after goal is found): ", _defVisa)
+
+if not pars.mazeName:
+    pars.mazeName = defInput("Insert maze name: ", "maze.txt", string=True)
 
 testN = 1
 while (os.path.exists(_testDirPath + '_' + str(testN))):
     testN += 1
 
-for testNIter in range(testN,testN+nExperiments):
+for testNIter in range(testN,testN+pars.nExperiments):
     os.makedirs(_testDirPath + '_' + str(testNIter))
     path = _testDirPath + '_' + str(testNIter) + '/'
 
@@ -61,12 +94,12 @@ for testNIter in range(testN,testN+nExperiments):
 
     print("result files generated")
 
-    a = agent.agent(environment = "../simulation/files/" + str(mazeName) ,graphic=0, suppressPrint=False)
+    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName) ,graphic=0, suppressPrint=False)
 
     params = open(path + 'parameters.txt', 'w')
 
-    params.write("Iterations: " + str(iterations) + "\n")
-    params.write("Visa: "+ str(visa) + "\n")
+    params.write("Iterations: " + str(pars.iterations) + "\n")
+    params.write("Visa: "+ str(pars.visa) + "\n")
     params.write("Maze Size: " + str(a.environment.size[0]) + "*" + str(a.environment.size[1]) + "\n\n")
 
     params.write("\nReward values:")
@@ -96,7 +129,7 @@ for testNIter in range(testN,testN+nExperiments):
     pR = []
     pU = []
 
-    for k in range(iterations):
+    for k in range(pars.iterations):
         time = 0
         r = a.livePar.baseReward
         accumulatedReward = 0
@@ -105,12 +138,12 @@ for testNIter in range(testN,testN+nExperiments):
             a.act(0)
 
             time += 1
-            r = (((a.transitionHistory)[a.time - 1])[1])[0]
+            r = a.rewardHistory[-1][0]
             accumulatedReward += r
 
         extra_time = 1
         good_use = 0
-        while(extra_time<visa):
+        while(extra_time<pars.visa):
             a.act(0)
             extra_time+=1
             r = (((a.transitionHistory)[a.time - 1])[1])[0]
@@ -120,13 +153,13 @@ for testNIter in range(testN,testN+nExperiments):
         fileT.write("%s" % time)
         fileR.write("%s" % accumulatedReward)
 
-        if(k<((iterations)-1)):
+        if(k<((pars.iterations)-1)):
             fileT.write(",")
             fileR.write(",")
 
         pT.append(time)
         pR.append(accumulatedReward)
-        pU.append(good_use/visa)
+        pU.append(good_use/pars.visa)
 
         a.environment.pullUpAgent()
 
