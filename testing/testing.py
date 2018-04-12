@@ -83,6 +83,41 @@ while (os.path.exists(_testDirPath + '_' + str(testN))):
     testN += 1
 
 for testNIter in range(testN,testN+pars.nExperiments):
+
+    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName) ,graphic=0, suppressPrint=False)
+
+    pT = []
+    pR = []
+    pU = []
+
+    for k in range(pars.iterations):
+        time = 0
+        r = a.livePar.baseReward
+        accumulatedReward = 0
+
+        while (r != a.livePar.goalReward):
+            a.act(0)
+
+            time += 1
+            r = a.rewardHistory[-1][0]
+            accumulatedReward += r
+
+        extra_time = 1
+        good_use = 0
+        while(extra_time<pars.visa):
+            a.act(0)
+            extra_time+=1
+            r = (((a.transitionHistory)[a.time - 1])[1])[0]
+            if(r == a.livePar.goalReward):
+                good_use+=1
+
+        pT.append(time)
+        pR.append(accumulatedReward)
+        pU.append(good_use/pars.visa)
+
+        a.environment.pullUpAgent()
+
+
     os.makedirs(_testDirPath + '_' + str(testNIter))
     path = _testDirPath + '_' + str(testNIter) + '/'
 
@@ -94,7 +129,14 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     print("result files generated")
 
-    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName) ,graphic=0, suppressPrint=False)
+    plt.plot(pT)
+    plt.savefig(path + 'timePlot.png')
+
+    plt.clf()
+
+    plt.plot(pU)
+    plt.draw()
+    plt.savefig(path + 'visaUsePlot.png')
 
     params = open(path + 'parameters.txt', 'w')
 
@@ -125,59 +167,19 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     params.close()
 
-    pT = []
-    pR = []
-    pU = []
-
     for k in range(pars.iterations):
-        time = 0
-        r = a.livePar.baseReward
-        accumulatedReward = 0
+        fileT.write("%s" % pT[k])
+        fileR.write("%s" % pR[k])
+        fileU.write("%s" % pU[k])
 
-        while (r != a.livePar.goalReward):
-            a.act(0)
-
-            time += 1
-            r = a.rewardHistory[-1][0]
-            accumulatedReward += r
-
-        extra_time = 1
-        good_use = 0
-        while(extra_time<pars.visa):
-            a.act(0)
-            extra_time+=1
-            r = (((a.transitionHistory)[a.time - 1])[1])[0]
-            if(r == a.livePar.goalReward):
-                good_use+=1
-
-        fileT.write("%s" % time)
-        fileR.write("%s" % accumulatedReward)
-
-        if(k<((pars.iterations)-1)):
+        if (k < ((pars.iterations) - 1)):
             fileT.write(",")
             fileR.write(",")
-
-        pT.append(time)
-        pR.append(accumulatedReward)
-        pU.append(good_use/pars.visa)
-
-        a.environment.pullUpAgent()
-
-    #fileT.write("end")
-    #fileR.write("end")
+            fileU.write(",")
 
     fileT.close()
     fileR.close()
-    fileU.close
-
-    plt.plot(pT)
-    plt.savefig(path + 'timePlot.png')
-
-    plt.clf()
-
-    plt.plot(pU)
-    plt.draw()
-    plt.savefig(path + 'visaUsePlot.png')
+    fileU.close()
 
     del a
 
