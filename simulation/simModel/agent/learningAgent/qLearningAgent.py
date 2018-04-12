@@ -20,24 +20,32 @@ class qLA():
 
         self._setQ(rs, nStates, nActions)
 
+        self.previous_state = None
+        self.last_action = None
+
     def policy(self, state, rs, learning=False):
         (a, stateValue) = self.argMaxQ(state, rs)
         mes.currentMessage("evaluating state at: " + str(stateValue) + ", with best action: " + str(a))
 
         mes.currentMessage("acting rationally")
+
+        if not learning:
+            self.previous_state = state
+            self.last_action = a
+
         return a
 
-    def learn(self, transition):
+    def learn(self, newState, r):
         mes.currentMessage("retrieving parameters")
 
-        s1 = transition[0][0]
-        a = transition[0][1]
-        s2 = transition[0][2]
-
-        r = transition[1]
+        s1 = self.previous_state
+        a = self.last_action
+        s2 = newState
 
         if type(r) == type(0.0):
             r = [r]*(len(self.Q))
+
+        mes.currentMessage("learning from transition <" + str(s1) + " , " + str(a) + " , " + str(s2) + " , " + str(r) + ">")
 
         _alpha = self.agent.livePar.learningRate
         _lambda = self.agent.livePar.discountFactor
@@ -126,12 +134,14 @@ class batchQL(neuralQL):
         self.batchSize = batchSize
         self.currentBatch = []
 
-    def learn(self, transition):
-        self.currentBatch.append(transition)
+    def learn(self, newState, reward):
+        self.currentBatch.append(((self.previous_state,self.last_action, newState), reward))
 
         if len(self.currentBatch)>=self.batchSize:
-            for t in self.currentBatch:
-                super(batchQL, self).learn(t)
+            for ((s1,a,s2),r) in self.currentBatch:
+                self.previous_state = s1
+                self.last_action = a
+                super(batchQL, self).learn(s2,r)
 
             self.currentBatch = []
 
@@ -158,10 +168,16 @@ class simAnneal(qLA):
 
         if (dice <= p and not learning):
             mes.currentMessage("acting randomly, with p: " + str(dice))
-            return rand.randint(0, 3)
+            a = rand.randint(0, 3)
+        else:
+            mes.currentMessage("acting rationally, with p: " + str(dice))
+            a = super(simAnneal, self).policy(state, rs)
 
-        mes.currentMessage("acting rationally, with p: " + str(dice))
-        return super(simAnneal, self).policy(state, rs)
+        if not learning:
+            self.previous_state = state
+            self.last_action = a
+
+        return a
 
 class boltzmann(simAnneal):
     def _val(self, t):
@@ -184,10 +200,20 @@ class boltzmann(simAnneal):
                 sys.exit("Infinity encountered at" + str(self.agent.time))
 
             if dice<=probabilities[i]:
+                if not learning:
+                    self.previous_state = state
+                    self.last_action = i
+
                 return i
             dice -= probabilities[i]
 
-        return rand.randint(0,len(probabilities)-1)
+        a = rand.randint(0,len(probabilities)-1)
+
+        if not learning:
+            self.previous_state = state
+            self.last_action = a
+
+        return a
 
 class interestQLA(qLA):
     def __init__(self, agent, rs, r, c):

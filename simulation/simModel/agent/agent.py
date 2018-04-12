@@ -63,33 +63,27 @@ class agent:
         mes.currentMessage("selecting action according to current beleived state")
         action = self.qAgent.policy(self.currentState, rs)
 
+        self.actionHistory.append(action)
+
         mes.currentMessage("performing action: " + str(action))
         (self.environment).performAction(action)  # here actual state is updated
         self.updatePerceivedTime()
 
         mes.currentMessage("perceiving")
         newState = self.perceive(self.problemStateDefinition)  # PARAMETRIZE
+
         mes.message("current problem state: " + str(newState))
         newGState = self.perceive(self.goalStateDefinition)
         reward = self.R(newGState)
+
         (self.sensoryHistory).append(newState+newGState)
         mes.currentMessage("Reward:" + str(reward))
 
 
-        mes.currentMessage("observing transition")
-        transition = ((self.currentState, action, newState), reward)
-        (self.transitionHistory).append(transition)
         mes.currentMessage("learning from previous transition: ")
-        self.qAgent.learn(transition)
+        self.qAgent.learn(newState, reward)
 
-        (self.stateHistory).append(self.currentState)
-
-        mes.settingMessage("current believed state from (" + str(self.currentState) + ")")
         self.currentState = newState
-        mes.setMessage("current believed state to (" + str(self.currentState) + ")")
-
-        #if (self.graphic):
-            #(self.environment).changeBelief()
 
     def R(self, goalDetection):
         rs = []
@@ -135,7 +129,7 @@ class agent:
         self.stateHistory = []
 
         mes.currentMessage("initializing transition history")
-        self.transitionHistory = []
+        self.actionHistory = []
 
         mes.currentMessage("initializing perceived time")
         self.time = 0
