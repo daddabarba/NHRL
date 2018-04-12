@@ -30,6 +30,7 @@ class SysPars():
         self.iterations = None
         self.visa = None
         self.mazeName = None
+        self.parsFile = None
 
 pars = SysPars()
 
@@ -44,6 +45,8 @@ def runPars(pars,i):
         pars.visa = int((sys.argv)[i + 1])
     elif (sys.argv)[i] == "maze":
         pars.mazeName = "maze.txt" if (sys.argv)[i + 1]=="def" else (sys.argv)[i + 1]
+    elif (sys.argv)[i] == "pars":
+        pars.parsFile = (sys.argv)[i + 1]
 
 _defIter = 60
 _defVisa = 1
@@ -84,7 +87,7 @@ while (os.path.exists(_testDirPath + '_' + str(testN))):
 
 for testNIter in range(testN,testN+pars.nExperiments):
 
-    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName) ,graphic=0, suppressPrint=False)
+    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName), pars=pars.parsFile ,graphic=0, suppressPrint=False)
 
     pT = []
     pR = []
@@ -176,6 +179,8 @@ for testNIter in range(testN,testN+pars.nExperiments):
             fileT.write(",")
             fileR.write(",")
             fileU.write(",")
+
+    a.exportPars(path+'pars.JSON')
 
     fileT.close()
     fileR.close()

@@ -23,7 +23,7 @@ def attachSensors():
     return meta.getFunctionsDefinitions(sensors)
 
 class agent:
-    def __init__(self, startingState="c", environment="../../files/maze.txt", graphic=True, suppressPrint = False):
+    def __init__(self, startingState="c", environment="../../files/maze.txt", pars=None, graphic=True, suppressPrint = False):
 
         mes.suppress = suppressPrint
 
@@ -34,7 +34,7 @@ class agent:
         self.environment = env.environment(environment, self, startingState, graphic)
 
         mes.settingMessage("live parameters")
-        self.livePar = par.agentPar()
+        self.livePar = par.agentPar(source=pars)
         mes.setMessage("live parameters")
 
 
@@ -144,6 +144,9 @@ class agent:
         self.qAgent.reset()
 
         self._setHistory()
+
+    def exportPars(self, location):
+        self.livePar.export(location)
 
     def __del__(self):
         self.currentState = self.sensoryHistory = self.transitionHistory = self.time = 0
