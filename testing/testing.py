@@ -1,4 +1,5 @@
 import sys
+import json
 
 sys.path.append('../messages/')
 
@@ -31,6 +32,7 @@ class SysPars():
         self.visa = None
         self.mazeName = None
         self.parsFile = None
+        self.origin = None
 
 pars = SysPars()
 
@@ -47,6 +49,8 @@ def runPars(pars,i):
         pars.mazeName = "maze.txt" if (sys.argv)[i + 1]=="def" else (sys.argv)[i + 1]
     elif (sys.argv)[i] == "pars":
         pars.parsFile = (sys.argv)[i + 1]
+    elif (sys.argv)[i] == "origin":
+        pars.origin = (sys.argv)[i + 1]
 
 _defIter = 60
 _defVisa = 1
@@ -63,6 +67,9 @@ def defInput(mes, defVal, string=False):
 for i in range(1,len(sys.argv)-1,2):
     runPars(pars,i)
 
+if pars.origin:
+    pars.__dict__.update(json.load(open(pars.origin, 'r')))
+
 if not pars.name:
     pars.name = input("Insert test folder name: ")
 
@@ -72,10 +79,10 @@ _testDirPath+=dirName
 if not pars.nExperiments:
     pars.nExperiments = defInput("Insert number of experiments: ", 1)
 
-if not pars.iterations:
+if not pars.iterations :
     pars.iterations = defInput("Insert number of iterations: ", _defIter)
 
-if not pars.visa:
+if not pars.visa :
     pars.visa = defInput("Insert visa value (extra time after goal is found): ", _defVisa)
 
 if not pars.mazeName:
@@ -181,6 +188,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
             fileU.write(",")
 
     a.exportPars(path+'pars.JSON')
+    json.dump({"time": pT, "rewards": pR, "visa": pU}, open(path+'results.JSON', 'w'))
 
     fileT.close()
     fileR.close()

@@ -46,7 +46,12 @@ class agentPar:
         self.source = source
 
         if self.source:
-            self.__dict__.update(json.load(open(self.source,'r')))
+            if type(self.source) == type({}):
+                self.__dict__.update(source)
+            else:
+                self.__dict__.update(json.load(open(source,'r')))
+
+            self.source = source
         else:
             mes.currentMessage("Setting base reward value to " + str(_defBaseReward))
             self.baseReward = _defBaseReward
@@ -144,7 +149,13 @@ class agentPar:
 
     def resetPars(self):
         if self.source:
-            self.__dict__.update(json.load(open(self.source, 'r')))
+            source = self.source
+            if type(self.source) == type({}):
+                self.__dict__.update(source)
+            else:
+                self.__dict__.update(json.load(open(source,'r')))
+
+            self.source = source
         else:
             self.baseReward = _defBaseReward
             self.goalReward = _defGoalReward
