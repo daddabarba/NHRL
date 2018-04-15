@@ -4,11 +4,43 @@ from tensorflow.contrib import rnn
 
 import numpy as np
 
+rnn_bias_key = 'rnn/basic_lstm_cell/bias:0'
+rnn_kernel_key = 'rnn/basic_lstm_cell/kernel:0'
 
-# import rnnPar as par
+out_weights_key = 'weights'
+out_bias_key = 'bias'
+
+
+def uniqeScope(name):
+    vars = tf.global_variables()
+    scope = [v for v in vars if v.name.startswith(name+'/')]
+
+    if not scope:
+        return name
+
+    count = 0
+
+    if name[-1] != '_':
+        name += '_'
+    name += str(count)
+
+    while scope:
+        count += 1
+
+        name = list(name)
+        name[-1] = str(count)
+        name = "".join(name)
+
+        scope = [v for v in vars if v.name.startswith(name+'/')]
+
+    return name
+
 
 class LSTM():
-    def __init__(self, input_size, rnn_size, output_size, alpha, session=-1):
+    def __init__(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm"):
+        # storing scope name
+        self.scope = uniqeScope(scope)
+
         # setting hyperparameters
         self.input_size = input_size
         self.output_size = output_size
@@ -22,25 +54,25 @@ class LSTM():
         self.yPH = tf.placeholder('float')
 
         # time series of inputs (and outputs)
-        self.input_baches = []
-        self.target_baches = []
+        self.input_batches = []
+        self.target_batches = []
 
-        # saving lstm prediciton and state function (w.r.t. input placeholder)
-        (self.prediction, self.state) = self.neural_network_model(self.xPH)
-        # setting cost function (in function of prediction and output placeholder for target values)
-        self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.prediction, labels=self.yPH))
-        # setting optimizer
-        if alpha>0:
-            self.optimizer = tf.train.AdamOptimizer(learning_rate=alpha).minimize(self.cost)
-        else:
-            self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
+        with tf.variable_scope(self.scope):
+            # saving lstm prediciton and state function (w.r.t. input placeholder)
+            (self.prediction, self.state) = self.neural_network_model(self.xPH)
+            # setting cost function (in function of prediction and output placeholder for target values)
+            self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.prediction, labels=self.yPH))
+            # setting optimizer
+            if alpha>0:
+                self.optimizer = tf.train.AdamOptimizer(learning_rate=alpha).minimize(self.cost)
+            else:
+                self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
 
         # starting session
-        if session == -1:
-            self.sess = tf.Session()
-        else:
-            self.sess = session
+        if not session:
+            session = tf.Session()
 
+        self.sess = session
         (self.sess).run(tf.global_variables_initializer())
 
     # reshapres input tensors to the correct format
@@ -77,10 +109,10 @@ class LSTM():
 
         # train_x = train_x.eval(session=sess)
 
-        self.input_baches.append(train_x)
-        self.target_baches.append(train_y)
+        self.input_batches.append(train_x)
+        self.target_batches.append(train_y)
 
-        fd = {self.xPH: np.array(self.input_baches), self.yPH: np.array(self.target_baches)}
+        fd = {self.xPH: np.array(self.input_batches), self.yPH: np.array(self.target_batches)}
 
         prediction, state, _ = (self.sess).run([self.prediction, self.state, self.optimizer], feed_dict=fd)
         # epoch_loss += c
@@ -89,7 +121,7 @@ class LSTM():
         return (prediction, state)
 
     def predict(self, input=None):
-        feed_dict = {self.xPH: np.array(self.input_baches + ([input] if input != None else []))}
+        feed_dict = {self.xPH: np.array(self.input_batches + ([input] if input != None else []))}
 
         return (self.sess).run([self.prediction], feed_dict)
 
@@ -100,6 +132,9 @@ class LSTM():
         return self.getTensor(self.state)
 
     def getTensor(self, T):
-        feed_dict = {self.xPH: np.array(self.input_baches)}
+        feed_dict = {self.xPH: np.array(self.input_batches)}
 
         return self.sess.run(T, feed_dict)
+
+    def getVars(self):
+        return [v for v in tf.global_variables() if v.name.startswith(self.scope+'/')]

@@ -3,6 +3,7 @@ import sys
 sys.path.append('../../../../messages/')
 
 import numpy as np
+import tensorflow as tf
 import random as rand
 
 import LSTM as lstm
@@ -107,7 +108,8 @@ class basicQL(qLA):
 
 
 class neuralQL(qLA):
-    def __init__(self, agent, rs, stateSize, nActions):
+    def __init__(self, agent, rs, stateSize, nActions, session=None):
+        self.sess = session
         super(neuralQL, self).__init__(agent, rs, stateSize, nActions)
 
     def updateQ(self, state, action, update, rs):
@@ -122,14 +124,17 @@ class neuralQL(qLA):
     def _setQ(self, rs, stateSize, nActions):
         self.Q = []
 
+        if not self.sess:
+            self.sess = tf.Session()
+
         for i in range(rs):
-            (self.Q).append(lstm.LSTM(stateSize, _defRnnSize, nActions, self.agent.livePar.neuralLearningRate))
+            (self.Q).append(lstm.LSTM(stateSize, _defRnnSize, nActions, self.agent.livePar.neuralLearningRate, session=self.sess))
 
 
 
 class batchQL(neuralQL):
-    def __init__(self, agent, rs, stateSize, nActions, batchSize):
-        super(batchQL, self).__init__(agent, rs, stateSize, nActions)
+    def __init__(self, agent, rs, stateSize, nActions, batchSize, session=None):
+        super(batchQL, self).__init__(agent, rs, stateSize, nActions, session)
 
         self.batchSize = batchSize
         self.currentBatch = []
@@ -265,15 +270,15 @@ class qLAIA(simAnneal, interestQLA):
         super(qLAIA, self).__init__(agent, rs, r, c)
 
 class neuralSimAnneal(simAnneal, neuralQL):
-    def __init__(self, agent, rs, r, c):
-        super(neuralSimAnneal, self).__init__(agent, rs, r, c)
+    def __init__(self, agent, rs, r, c, session=None):
+        super(neuralSimAnneal, self).__init__(agent, rs, r, c, session)
 
 class neuralBoltzmann(boltzmann, neuralQL):
-    def __init__(self, agent, rs, r, c):
-        super(neuralBoltzmann, self).__init__(agent, rs, r, c)
+    def __init__(self, agent, rs, r, c, session=None):
+        super(neuralBoltzmann, self).__init__(agent, rs, r, c, session)
 
 class batchBoltzmann(boltzmann, batchQL):
-    def __init__(self, agent, rs, r, c, batchSize):
-        super(batchBoltzmann, self).__init__(agent, rs, r, c, batchSize)
+    def __init__(self, agent, rs, r, c, batchSize, session=None):
+        super(batchBoltzmann, self).__init__(agent, rs, r, c, batchSize, session)
 
 
