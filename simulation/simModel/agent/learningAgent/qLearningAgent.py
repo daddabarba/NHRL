@@ -154,14 +154,19 @@ class batchQL(neuralQL):
         self.currentBatch = []
 
     def learn(self, newState, reward):
-        self.currentBatch.append(((self.previous_state,self.last_action,self.last_policy, newState), reward))
+        self.currentBatch.append(((self.previous_state,self.last_action, newState), reward))
 
         if len(self.currentBatch)>=self.batchSize:
-            for ((s1,a,p,s2),r) in self.currentBatch:
+            save_action = self.last_action
+            save_state = self.previous_state
+
+            for ((s1,a,s2),r) in self.currentBatch:
                 self.previous_state = s1
                 self.last_action = a
-                self.last_policy = p
                 super(batchQL, self).learn(s2,r)
+
+            self.previous_state = save_state
+            self.last_action = save_action
 
             self.currentBatch = []
 
