@@ -4,6 +4,8 @@ from tensorflow.contrib import rnn
 
 import numpy as np
 
+import lstmAux as aux
+
 rnn_bias_key = 'rnn/basic_lstm_cell/bias:0'
 rnn_kernel_key = 'rnn/basic_lstm_cell/kernel:0'
 
@@ -11,35 +13,10 @@ out_weights_key = 'weights'
 out_bias_key = 'bias'
 
 
-def uniqeScope(name):
-    vars = tf.global_variables()
-    scope = [v for v in vars if v.name.startswith(name+'/')]
-
-    if not scope:
-        return name
-
-    count = 0
-
-    if name[-1] != '_':
-        name += '_'
-    name += str(count)
-
-    while scope:
-        count += 1
-
-        name = list(name)
-        name[-1] = str(count)
-        name = "".join(name)
-
-        scope = [v for v in vars if v.name.startswith(name+'/')]
-
-    return name
-
-
 class LSTM():
     def __init__(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm"):
         # storing scope name
-        self.scope = uniqeScope(scope)
+        self.scope = aux.uniqeScope(scope)
 
         # setting hyperparameters
         self.input_size = input_size
@@ -135,6 +112,12 @@ class LSTM():
         feed_dict = {self.xPH: np.array(self.input_batches)}
 
         return self.sess.run(T, feed_dict)
+
+    def printVars(self):
+        vars = self.getVars()
+
+        for v in vars:
+            print(v.name)
 
     def getVars(self):
         return [v for v in tf.global_variables() if v.name.startswith(self.scope+'/')]

@@ -1,6 +1,8 @@
 import sys
 
 sys.path.append('../../../../messages/')
+sys.path.append('../learningAgent/ann/')
+sys.path.append('../agent/learningAgent/ann/')
 
 import numpy as np
 import tensorflow as tf
