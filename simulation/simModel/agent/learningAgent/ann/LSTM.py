@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append('../../../../../messages/')
+
 import tensorflow as tf
 from tensorflow.python.ops import rnn_cell
 from tensorflow.contrib import rnn
@@ -5,6 +9,8 @@ from tensorflow.contrib import rnn
 import numpy as np
 
 import lstmAux as aux
+
+import messages as mes
 
 rnn_bias_key = 'rnn/basic_lstm_cell/bias:0'
 rnn_kernel_key = 'rnn/basic_lstm_cell/kernel:0'
@@ -35,6 +41,16 @@ class LSTM():
         self.target_batches = []
 
         with tf.variable_scope(self.scope):
+            x = self.reshapeData(self.xPH)
+
+            self.lstm_layer = rnn_cell.BasicLSTMCell(self.rnn_size)
+            self.outputs, self.states = rnn.static_rnn(self.lstm_layer, x, dtype=tf.float32, sequence_length=[1])
+
+            W = tf.Variable(tf.random_normal([self.rnn_size, self.output_size]))
+            b = tf.Variable(tf.random_normal([self.output_size]))
+
+            self.output_layer = {'weights': W, 'biases': b}
+
             # saving lstm prediciton and state function (w.r.t. input placeholder)
             (self.prediction, self.state) = self.neural_network_model(self.xPH)
             # setting cost function (in function of prediction and output placeholder for target values)
@@ -56,7 +72,7 @@ class LSTM():
     def reshapeData(self, x):
         # matrix transpose
         x = tf.transpose(x, [1, 0])
-        # split in timesteps
+        # split in time-steps
         x = tf.reshape(x, [-1, self.input_size])
         x = tf.split(x, self.epoch)
 
@@ -69,30 +85,18 @@ class LSTM():
     def neural_network_model(self, x):
         x = self.reshapeData(x)
 
-        lstm_layer = rnn_cell.BasicLSTMCell(self.rnn_size)
-        outputs, states = rnn.static_rnn(lstm_layer, x, dtype=tf.float32, sequence_length=[1])
+        output = tf.matmul(self.outputs[-1], self.output_layer['weights']) + self.output_layer['biases']
 
-        output_layer = {'weights': tf.Variable(tf.random_normal([self.rnn_size, self.output_size])),
-                        'biases': tf.Variable(tf.random_normal([self.output_size]))}
-
-        output = tf.matmul(outputs[-1], output_layer['weights']) + output_layer['biases']
-
-        return (output, states[-1])
+        return (output, self.states[-1])
 
     def train_neural_network(self, train_x, train_y):
-        # train_x = tf.transpose(train_x,[1,0])
-        # train_x = tf.reshape(train_x,[-1, par.input_size])
-        # train_x = tf.split(train_x, par.t)
-
-        # train_x = train_x.eval(session=sess)
-
         self.input_batches.append(train_x)
         self.target_batches.append(train_y)
 
         fd = {self.xPH: np.array(self.input_batches), self.yPH: np.array(self.target_batches)}
 
-        prediction, state, _ = (self.sess).run([self.prediction, self.state, self.optimizer], feed_dict=fd)
-        # epoch_loss += c
+        prediction, state, _, c = (self.sess).run([self.prediction, self.state, self.optimizer, self.cost], feed_dict=fd)
+        mes.currentMessage("Epoch loss: " + str(c))
 
         self.epoch += 1
         return (prediction, state)
