@@ -132,7 +132,12 @@ class neuralQL(qLA):
         for i in range(rs):
             (self.Q).append(lstm.LSTM(stateSize, _defRnnSize, nActions, self.agent.livePar.neuralLearningRate, session=self.sess))
 
+    def copyAction(self, ind):
+        for i in range(len(self.Q)):
+            self.Q[i] = self.Q[i].copyOutput(ind)
 
+    def copyPolicy(self, ind):
+        self.Q.append(self.Q[ind].copyNetwork())
 
 class batchQL(neuralQL):
     def __init__(self, agent, rs, stateSize, nActions, batchSize, session=None):

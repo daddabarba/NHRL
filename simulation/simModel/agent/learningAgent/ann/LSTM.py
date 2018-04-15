@@ -152,7 +152,12 @@ class LSTM():
         output_layer = {out_weights_key: self.sess.run(new_W), out_bias_key: self.sess.run(new_b)}
         rnn_layer = self.getCopy()['rnn']
 
-        self.restart(self.input_size, rnn_layer, output_layer, self.alpha, self.sess, self.scope)
+        return self.restart(self.input_size, rnn_layer, output_layer, self.alpha, self.sess, self.scope)
+
+    def copyNetwork(self):
+        parameters = self.getCopy()
+
+        return self.restart(self.input_size, parameters['rnn'], parameters['out'], self.alpha, self.sess, self.scope)
 
     def getCopy(self):
 
