@@ -26,6 +26,8 @@ class qLA():
         self.previous_state = None
         self.last_action = None
 
+        self.last_policy = None
+
     def policy(self, state, rs, learning=False):
         (a, stateValue) = self.argMaxQ(state, rs)
         mes.currentMessage("evaluating state at: " + str(stateValue) + ", with best action: " + str(a))
@@ -35,6 +37,8 @@ class qLA():
         if not learning:
             self.previous_state = state
             self.last_action = a
+
+            self.last_policy = rs
 
         return a
 
@@ -48,24 +52,29 @@ class qLA():
         if type(r) == type(0.0):
             r = [r]*(len(self.Q))
 
+        if type(r) == tuple:
+            vec_r = [None for i in range(len(self.Q))]
+            vec_r[r[0]] = r[1]
+            r = vec_r
+
         mes.currentMessage("learning from transition <" + str(s1) + " , " + str(a) + " , " + str(s2) + " , " + str(r) + ">")
 
         _alpha = self.agent.livePar.learningRate
         _lambda = self.agent.livePar.discountFactor
 
         for i in range(len(self.Q)):
+            if r[i]:
+                valueNext = self.stateValue(s2,i) #Q[i][s2][self.policy(s2, i)]
 
-            valueNext = self.stateValue(s2,i) #Q[i][s2][self.policy(s2, i)]
+                mes.currentMessage("computing new state action value")
+                memory = (_alpha) * (self.stateActionValue(s1,a,i))  #((self.Q)[i][s1][a])
+                learning = (1 - _alpha) * (r[i] + _lambda * (valueNext))
 
-            mes.currentMessage("computing new state action value")
-            memory = (_alpha) * (self.stateActionValue(s1,a,i))  #((self.Q)[i][s1][a])
-            learning = (1 - _alpha) * (r[i] + _lambda * (valueNext))
+                mes.settingMessage("new state action value")
+                #(self.Q)[i][s1][a] = memory + learning
+                self.updateQ(s1,a, memory+learning, i)
 
-            mes.settingMessage("new state action value")
-            #(self.Q)[i][s1][a] = memory + learning
-            self.updateQ(s1,a, memory+learning, i)
-
-            mes.setMessage("new state action value")
+                mes.setMessage("new state action value")
 
     def updateQ(self, state, action, update, rs):
         (self.Q)[rs][state][action] = update
@@ -93,9 +102,7 @@ class qLA():
         self.Q = ((np.random.rand(rs, r, c)) * len) + min
 
     def reset(self):
-        self._setQ(self.agent.rsSize, self.nStates,
-                   self.nActions)
-        #self.I = (np.zeros((len(self.Q), len(self.Q[0]), len(self.Q[0][0])))) + 1
+        self._setQ(self.agent.rsSize, self.nStates, self.nActions)
 
     def __del__(self):
         self.Q = self.I = 0
@@ -147,12 +154,13 @@ class batchQL(neuralQL):
         self.currentBatch = []
 
     def learn(self, newState, reward):
-        self.currentBatch.append(((self.previous_state,self.last_action, newState), reward))
+        self.currentBatch.append(((self.previous_state,self.last_action,self.last_policy, newState), reward))
 
         if len(self.currentBatch)>=self.batchSize:
-            for ((s1,a,s2),r) in self.currentBatch:
+            for ((s1,a,p,s2),r) in self.currentBatch:
                 self.previous_state = s1
                 self.last_action = a
+                self.last_policy = p
                 super(batchQL, self).learn(s2,r)
 
             self.currentBatch = []
@@ -189,6 +197,8 @@ class simAnneal(qLA):
             self.previous_state = state
             self.last_action = a
 
+            self.last_policy = rs
+
         return a
 
 class boltzmann(simAnneal):
@@ -216,6 +226,8 @@ class boltzmann(simAnneal):
                     self.previous_state = state
                     self.last_action = i
 
+                    self.last_policy = rs
+
                 return i
             dice -= probabilities[i]
 
@@ -224,6 +236,8 @@ class boltzmann(simAnneal):
         if not learning:
             self.previous_state = state
             self.last_action = a
+
+            self.last_policy = rs
 
         return a
 
@@ -288,4 +302,43 @@ class batchBoltzmann(boltzmann, batchQL):
     def __init__(self, agent, rs, r, c, batchSize, session=None):
         super(batchBoltzmann, self).__init__(agent, rs, r, c, batchSize, session)
 
+
+#####################################
+#HIERARCHICAL REINFORCEMENT LEARNING#
+#####################################
+
+class hieararchy():
+
+    def __init__(self, agent, stateSize, , batchSize, nActions=None, structure=[1], session=None):
+        if nActions:
+            structure.append(nActions)
+
+        if not session:
+            session = tf.Session()
+        self.sess = session
+
+        self.hierarchy = []
+        for i in range(1,len(structure)):
+            layer = batchBoltzmann(agent, structure[i], stateSize, structure[i-1], batchSize, self.sess)
+            self.hierarchy.append(layer)
+
+    def policy(self, state, rs, layer=None):
+        if not layer:
+            layer = len(self.hierarchy-1)
+
+        action = self.hierarchy[layer].policy(state, rs)
+
+        if layer!=0:
+            return self.policy(state, action, layer-1)
+
+        return action
+
+    def learn(self, newState, r):
+        for layer in self.hierarchy:
+            reward = (layer.last_policy, r)
+            layer.learn(newState, reward)
+
+    def reset(self):
+        for layer in self.hierarchy:
+            layer.reset()
 
