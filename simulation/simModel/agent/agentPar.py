@@ -33,6 +33,8 @@ _defNeuralLearningRate = -1
 
 _defBatchSize = 20
 
+_defSDMax = 1.5
+
 _defStartQMin = 2 * par.baseReward * (-1 if par.baseReward > 0 else 1)
 _defStartQMax = _defStartQMin * (-1)
 
@@ -110,6 +112,9 @@ class agentPar:
             mes.currentMessage("Setting batch size " + str(_defBatchSize))
             self.batchSize = _defBatchSize
 
+            mes.currentMessage("Setting max SD " + str(_defSDMax))
+            self.SDMax = _defSDMax
+
     def printPars(self):
 
         print("\nReward values:")
@@ -144,6 +149,9 @@ class agentPar:
 
         print("\nBatch reinforcement learning:")
         print("\tbatch size: " + str(self.batchSize) )
+
+        print("\nHRL:")
+        print("\tMax SD: " + str(self.SDMax))
 
         print("\n")
 
@@ -183,6 +191,8 @@ class agentPar:
 
             self.batchSize = _defBatchSize
 
+            self.SDMax = _defSDMax
+
     def changePars(self):
         self.baseReward = defInput("Insert base reward value: ", self.baseReward)
         self.goalReward = defInput("Insert goal reward value: ", self.goalReward)
@@ -210,6 +220,8 @@ class agentPar:
 
         self.batchSize = defInput("Insert batch size: ", self.batchSize)
 
+        self.SDMax = defInput("Max SD: ", self.SDMax)
+
     def export(self, loc):
         save = self.__dict__["source"]
         del self.__dict__["source"]
@@ -217,5 +229,5 @@ class agentPar:
         self.__dict__["source"] = save
 
     def __del__(self):
-        self.batchSize = self.speed = self.height = self.lowBound = self.startPoint = self.neuralLearningRate = self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
+        self.SDMax = self.batchSize = self.speed = self.height = self.lowBound = self.startPoint = self.neuralLearningRate = self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
         print (self.__class__.__name__, "has been deleted")

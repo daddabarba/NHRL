@@ -1,8 +1,12 @@
 import sys
 
 sys.path.append('../../../../messages/')
+
 sys.path.append('../learningAgent/ann/')
 sys.path.append('../agent/learningAgent/ann/')
+
+sys.path.append('../learningAgent/stats/')
+sys.path.append('../agent/learningAgent/stats/')
 
 import numpy as np
 import tensorflow as tf
@@ -11,6 +15,8 @@ import random as rand
 import LSTM as lstm
 
 import messages as mes
+
+import vecStats as stats
 
 _defRnnSize = 128
 
@@ -145,6 +151,12 @@ class neuralQL(qLA):
 
     def copyPolicy(self, ind):
         self.Q.append(self.Q[ind].copyNetwork())
+
+    def getNNState(self, rs):
+        return self.Q[rs].getLastState()
+
+    def rec(self, rs):
+        self.Q[rs].add_batch([self.previous_state])
 
 class batchQL(neuralQL):
     def __init__(self, agent, rs, stateSize, nActions, batchSize, session=None):
@@ -314,9 +326,11 @@ class batchBoltzmann(boltzmann, batchQL):
 
 class hieararchy():
 
-    def __init__(self, agent, stateSize, , batchSize, nActions=None, structure=[1], session=None):
+    def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1], session=None):
+        self.agent = agent
+
         if nActions:
-            structure.append(nActions)
+            structure = [nActions] + structure
 
         if not session:
             session = tf.Session()
@@ -327,16 +341,57 @@ class hieararchy():
             layer = batchBoltzmann(agent, structure[i], stateSize, structure[i-1], batchSize, self.sess)
             self.hierarchy.append(layer)
 
+        report_template = {'sd': 0.0, 'mu': np.zeros(_defRnnSize), 'N': 0}
+        self.policy_data = [[report_template.copy() for i in range(layer_size)] for layer_size in structure[1:]]
+        self.layer_data = [report_template.copy() for layer_size in structure[1:]]
+
     def policy(self, state, rs, layer=None):
         if not layer:
-            layer = len(self.hierarchy-1)
+            layer = len(self.hierarchy) - 1
 
         action = self.hierarchy[layer].policy(state, rs)
+        self.hierarchy[layer].rec(rs)
+
+        abstract_state = self.state_abstraction(state, layer, rs)
+        self.updateData(abstract_state, rs, layer)
 
         if layer!=0:
             return self.policy(state, action, layer-1)
 
         return action
+
+    def state_abstraction(self, state, layer, rs):
+        return self.hierarchy[layer].getNNState(rs)
+
+    def task_abstraction(self):
+        ANN = self.hierarchy[-1].Q[0]
+        parameters = ANN.getCopy()
+
+        W = parameters['out']
+        rnn = parameters['rnn']
+
+        new_w = (W * (1 / (np.shape(W)[1]))).sum(1)
+        new_W = np.transpose(np.array([new_w, new_w]))
+
+        self.hierarchy.append(ANN.restart(ANN.input_size, rnn, new_W, ANN.alpha, self.sess, ANN.scope))
+
+    def updateData(self, newState, policy, layer):
+        self.policy_data[layer][policy] = stats.update_stats(self.policy_data[layer][policy], newState)
+        self.layer_data[layer] = stats.update_stats(self.layer_data[layer], newState)
+
+        WSS =  self.policy_data[layer][policy]['sd']
+        TSS =  self.layer_data[layer]['sd']
+
+        if(WSS/TSS) > self.agent.livePar.SDMax:
+            mes.currentMessage("Policy (" + str(layer) + "," + str(rs) + ") not specialized, splitting in subtasks")
+
+            if layer == len(self.hierarchy) - 1:
+                self.abstract_task()
+            else:
+                self.hierarchy[layer+1].copyAction(rs)
+            self.hierarchy[layer].copyPolicy(rs)
+
+            #self.printStructure()
 
     def learn(self, newState, r):
         for layer in self.hierarchy:
@@ -347,3 +402,8 @@ class hieararchy():
         for layer in self.hierarchy:
             layer.reset()
 
+    def printStructure(self):
+        print("^")
+        for layer in self.hierarchy[:-1]:
+            for i in range(len(layer.Q)):
+                print("* ", end='')

@@ -21,14 +21,15 @@ out_bias_key = 'biases'
 
 class LSTM():
     def restart(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm"):
-        self = self.__class__(input_size, rnn_size, output_size, alpha, session, scope)
+        self = self.__class__(input_size, rnn_size, output_size, alpha, session, scope, self.batch_x, self.batch_y, self.store)
         return self
 
-    def __init__(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm"):
+    def __init__(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm", batch_x=None, batch_y=None, store=True):
         # storing scope name
         self.scope = aux.uniqeScope(scope)
 
         self.alpha = alpha
+        self.store = store
 
         # setting hyperparameters
         self.input_size = input_size
@@ -43,8 +44,15 @@ class LSTM():
         self.yPH = tf.placeholder('float')
 
         # time series of inputs (and outputs)
-        self.input_batches = []
-        self.target_batches = []
+        if batch_x:
+            self.input_batches = batch_x
+        else:
+            self.input_batches = []
+
+        if batch_y:
+            self.target_batches = batch_y
+        else:
+            self.target_batches = []
 
         with tf.variable_scope(self.scope):
             x = self.reshapeData(self.xPH)
@@ -107,11 +115,16 @@ class LSTM():
 
         return (output, self.states[-1])
 
+    def add_batch(self, train_x):
+        self.input_batches += train_x
+        self.store = False
+
     def train_neural_network(self, train_x, train_y):
-        self.input_batches.append(train_x)
+        if self.store:
+            self.input_batches.append(train_x)
         self.target_batches.append(train_y)
 
-        fd = {self.xPH: np.array(self.input_batches), self.yPH: np.array(self.target_batches)}
+        fd = {self.xPH: np.array(self.input_batches if self.store else self.input_batches[0:len(self.target_batches)]), self.yPH: np.array(self.target_batches)}
 
         prediction, state, _, c = (self.sess).run([self.prediction, self.state, self.optimizer, self.cost], feed_dict=fd)
         mes.currentMessage("Epoch loss: " + str(c))
@@ -127,8 +140,13 @@ class LSTM():
     def getLastPrediction(self, input=None):
         return (self.predict(input))[-1][-1]
 
-    def getState(self):
-        return self.getTensor(self.state)
+    def getState(self, input=None):
+        feed_dict = {self.xPH: np.array(self.input_batches + ([input] if input != None else []))}
+
+        return (self.sess).run([self.state], feed_dict)
+
+    def getLastState(self, input=None):
+        return (self.getState(input))[-1][-1]
 
     def getTensor(self, T):
         feed_dict = {self.xPH: np.array(self.input_batches)}
