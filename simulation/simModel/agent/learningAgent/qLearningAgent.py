@@ -18,7 +18,7 @@ import messages as mes
 
 import vecStats as stats
 
-_defRnnSize = 128
+_defRnnSize = 5
 
 class qLA():
     def __init__(self, agent, rs, nStates, nActions):
@@ -328,6 +328,8 @@ class hieararchy():
 
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1], session=None):
         self.agent = agent
+        self.batch_size = batchSize
+        self.stateSize = stateSize
 
         if nActions:
             structure = [nActions] + structure
@@ -345,11 +347,20 @@ class hieararchy():
         self.policy_data = [[report_template.copy() for i in range(layer_size)] for layer_size in structure[1:]]
         self.layer_data = [report_template.copy() for layer_size in structure[1:]]
 
-    def policy(self, state, rs, layer=None):
+        self.bottleneck_data = self.make_bottleneck_data(structure[-2])
+
+    def make_bottleneck_data(self, size):
+        return {'sd': 0.0, 'mu': np.zeros(size), 'N': 0}
+
+    def policy(self, state, rs=0, layer=None):
         if not layer:
             layer = len(self.hierarchy) - 1
 
         action = self.hierarchy[layer].policy(state, rs)
+
+        if layer == len(self.hierarchy) - 1:
+            self.updateBNData(state, rs)
+
         self.hierarchy[layer].rec(rs)
 
         abstract_state = self.state_abstraction(state, layer, rs)
@@ -363,17 +374,45 @@ class hieararchy():
     def state_abstraction(self, state, layer, rs):
         return self.hierarchy[layer].getNNState(rs)
 
-    def task_abstraction(self):
-        ANN = self.hierarchy[-1].Q[0]
+    def task_abstraction(self,rs):
+        ANN = self.hierarchy[-1].Q[rs]
         parameters = ANN.getCopy()
 
-        W = parameters['out']
+        W = parameters['out'][lstm.out_weights_key]
+        b = parameters['out'][lstm.out_bias_key]
         rnn = parameters['rnn']
 
-        new_w = (W * (1 / (np.shape(W)[1]))).sum(1)
+        size = (np.shape(W)[1])
+
+        new_w = (W * (1 / size)).sum(1)
         new_W = np.transpose(np.array([new_w, new_w]))
 
-        self.hierarchy.append(ANN.restart(ANN.input_size, rnn, new_W, ANN.alpha, self.sess, ANN.scope))
+        _b = (b*size).sum()
+        new_b = np.array([_b, _b])
+
+        W_pars = {lstm.out_weights_key: new_W, lstm.out_bias_key: new_b}
+
+        (self.hierarchy)[-1].copyPolicy(rs)
+        new_ANN = ANN.restart(ANN.input_size, rnn, W_pars, ANN.alpha, self.sess, ANN.scope)
+
+        self.hierarchy.append(batchBoltzmann(self.agent, 1, self.stateSize, 2, self.batch_size, self.sess))
+        self.hierarchy[-1].Q[0] = new_ANN
+
+    def action_abstraction(self, policy, layer):
+        mes.currentMessage("Policy (" + str(layer) + "," + str(rs) + ") not specialized, splitting in subtasks")
+
+        if layer == len(self.hierarchy) - 1: #ACTUALLY IMPOSSIBLE
+            return
+
+        self.hierarchy[layer + 1].copyAction(rs)
+        self.hierarchy[layer].copyPolicy(rs)
+
+        self.policy_data[layer][policy]['sd'] *= 1.0/4.0
+        self.policy_data[layer][policy]['mu'] *= 1.0/2.0
+
+        self.policy_data[layer].append(self.policy_data[layer][policy].copy())
+
+        # self.printStructure()
 
     def updateData(self, newState, policy, layer):
         self.policy_data[layer][policy] = stats.update_stats(self.policy_data[layer][policy], newState)
@@ -383,15 +422,34 @@ class hieararchy():
         TSS =  self.layer_data[layer]['sd']
 
         if(WSS/TSS) > self.agent.livePar.SDMax:
-            mes.currentMessage("Policy (" + str(layer) + "," + str(rs) + ") not specialized, splitting in subtasks")
+            self.action_abstraction(policy, layer)
 
-            if layer == len(self.hierarchy) - 1:
-                self.abstract_task()
-            else:
-                self.hierarchy[layer+1].copyAction(rs)
-            self.hierarchy[layer].copyPolicy(rs)
+    def updateBNData(self, state, rs):
+        pDist = np.array(self.hierarchy[-1].getPDist(state, rs))
 
-            #self.printStructure()
+        if self.bottleneck_data['sd']==0 or self.bottleneck_data['N'] == 0:
+            self.bottleneck_data = stats.update_stats(self.bottleneck_data, pDist)
+            return
+
+        norm = np.linalg.norm(pDist - self.bottleneck_data['mu'])/self.bottleneck_data['sd']
+
+        if norm > self.agent.livePar.BNBound:
+            self.task_abstraction(rs)
+            self.bottleneck_data = self.make_bottleneck_data(2)
+
+            self.policy_data.append([self.policy_data[-1][rs].copy()])
+            self.layer_data.append(self.layer_data[-1])
+
+            self.policy_data[-1][rs]['sd'] *= 1.0 / 4.0
+            self.policy_data[-1][rs]['mu'] *= 1.0 / 2.0
+
+            self.policy_data[-1].append(self.policy_data[-1][rs].copy())
+
+            self.bottleneck_data = stats.update_stats(self.bottleneck_data, [0.5,0.5])
+
+        else:
+
+            self.bottleneck_data = stats.update_stats(self.bottleneck_data, pDist)
 
     def learn(self, newState, r):
         for layer in self.hierarchy:

@@ -10,6 +10,8 @@ import numpy as np
 
 import lstmAux as aux
 
+import cross
+
 import messages as mes
 
 rnn_bias_key = 'rnn/basic_lstm_cell/bias:0'
@@ -21,7 +23,7 @@ out_bias_key = 'biases'
 
 class LSTM():
     def restart(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm"):
-        self = self.__class__(input_size, rnn_size, output_size, alpha, session, scope, self.batch_x, self.batch_y, self.store)
+        self = self.__class__(input_size, rnn_size, output_size, alpha, session, scope, self.input_batches, self.target_batches, self.store)
         return self
 
     def __init__(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm", batch_x=None, batch_y=None, store=True):
@@ -166,6 +168,7 @@ class LSTM():
 
         new_b = self.changeShape(self.output_layer[out_bias_key],  newShape=[new_shape[1]])
         new_b = self.override(new_b, [_b - np.log(2)], [new_shape[1] - 1])
+        new_b = self.override(new_b, [_b - np.log(2)], [ind])
 
         output_layer = {out_weights_key: self.sess.run(new_W), out_bias_key: self.sess.run(new_b)}
         rnn_layer = self.getCopy()['rnn']
@@ -182,15 +185,15 @@ class LSTM():
         W = self.sess.run(self.output_layer[out_weights_key])
         b = self.sess.run(self.output_layer[out_bias_key])
 
-        output_layer = {out_weights_key: self.sess.run(W), out_bias_key: self.sess.run(b)}
+        output_layer = {out_weights_key: W, out_bias_key: b}
 
         for v in tf.global_variables():
             if v.name == self.scope+'/'+rnn_bias_key:
                 rnn_bias = self.sess.run(v)
             if v.name == self.scope+'/'+rnn_kernel_key:
-                rnn_kernel = v
+                rnn_kernel = self.sess.run(v)
 
-        rnn_layer = {rnn_kernel_key: rnn_kernel, rnn_bias_key: rnn_bias}
+        rnn_layer = {rnn_kernel_key:rnn_kernel, rnn_bias_key: rnn_bias}
 
         return {'out': output_layer, 'rnn':rnn_layer}
 
