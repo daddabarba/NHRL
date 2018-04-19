@@ -4,10 +4,11 @@ sys.path.append('../../../../messages/')
 
 sys.path.append('../learningAgent/ann/')
 sys.path.append('../agent/learningAgent/ann/')
+sys.path.append('../simulation/simModel/agent/learningAgent/ann/')
 
 sys.path.append('../learningAgent/stats/')
 sys.path.append('../agent/learningAgent/stats/')
-
+sys.path.append('../simulation/simModel/agent/learningAgent/stats/')
 import numpy as np
 import tensorflow as tf
 import random as rand
