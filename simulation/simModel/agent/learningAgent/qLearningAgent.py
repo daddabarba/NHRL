@@ -354,10 +354,13 @@ class hieararchy():
         return {'sd': 0.0, 'mu': np.zeros(size), 'N': 0}
 
     def policy(self, state, rs=0, layer=None):
-        if not layer:
+        if not layer and layer!=0:
             layer = len(self.hierarchy) - 1
 
+        print("Current layer " + str(layer) + "/" + str(len(self.hierarchy)-1) + " on rs: " + str(rs) + "/" + str(len(self.hierarchy[layer].Q)-1))
+
         action = self.hierarchy[layer].policy(state, rs)
+
 
         if layer == len(self.hierarchy) - 1:
             self.updateBNData(state, rs)
@@ -368,6 +371,7 @@ class hieararchy():
         self.updateData(abstract_state, rs, layer)
 
         if layer!=0:
+            print("action: " + str(action) + "/" + str(len(self.hierarchy[layer - 1].Q)-1))
             return self.policy(state, action, layer-1)
 
         return action
@@ -376,6 +380,9 @@ class hieararchy():
         return self.hierarchy[layer].getNNState(rs)
 
     def task_abstraction(self,rs):
+        print("abstracting task, current shape: ")
+        self.printHierarchy()
+
         ANN = self.hierarchy[-1].Q[rs]
         parameters = ANN.getCopy()
 
@@ -399,7 +406,13 @@ class hieararchy():
         self.hierarchy.append(batchBoltzmann(self.agent, 1, self.stateSize, 2, self.batch_size, self.sess))
         self.hierarchy[-1].Q[0] = new_ANN
 
+        print("\n final shape: ")
+        self.printHierarchy()
+
     def action_abstraction(self, policy, layer):
+        print("\n abstracting action, current shape: ")
+        self.printHierarchy()
+
         mes.currentMessage("Policy (" + str(layer) + "," + str(rs) + ") not specialized, splitting in subtasks")
 
         if layer == len(self.hierarchy) - 1: #ACTUALLY IMPOSSIBLE
@@ -413,7 +426,8 @@ class hieararchy():
 
         self.policy_data[layer].append(self.policy_data[layer][policy].copy())
 
-        # self.printStructure()
+        print("\n final shape: ")
+        self.printHierarchy()
 
     def updateData(self, newState, policy, layer):
         self.policy_data[layer][policy] = stats.update_stats(self.policy_data[layer][policy], newState)
@@ -439,12 +453,12 @@ class hieararchy():
             self.bottleneck_data = self.make_bottleneck_data(2)
 
             self.policy_data.append([self.policy_data[-1][rs].copy()])
-            self.layer_data.append(self.layer_data[-1])
+            self.layer_data.append(self.layer_data[-1].copy())
 
-            self.policy_data[-1][rs]['sd'] *= 1.0 / 4.0
-            self.policy_data[-1][rs]['mu'] *= 1.0 / 2.0
+            self.policy_data[-2][rs]['sd'] *= 1.0 / 4.0
+            self.policy_data[-2][rs]['mu'] *= 1.0 / 2.0
 
-            self.policy_data[-1].append(self.policy_data[-1][rs].copy())
+            self.policy_data[-2].append(self.policy_data[-2][rs].copy())
 
             self.bottleneck_data = stats.update_stats(self.bottleneck_data, [0.5,0.5])
 
@@ -461,8 +475,7 @@ class hieararchy():
         for layer in self.hierarchy:
             layer.reset()
 
-    def printStructure(self):
-        print("^")
-        for layer in self.hierarchy[:-1]:
-            for i in range(len(layer.Q)):
-                print("* ", end='')
+
+    def printHierarchy(self):
+        for layer in self.hierarchy:
+            print(str(len(layer.Q)) + " , ", end="")
