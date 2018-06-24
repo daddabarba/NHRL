@@ -166,7 +166,7 @@ class batchQL(neuralQL):
         self.batchSize = batchSize
         self.currentBatch = []
 
-    def learn(self, newState, reward):
+    def  learn(self, newState, reward):
         self.currentBatch.append(((self.previous_state,self.last_action, newState), reward))
 
         if len(self.currentBatch)>=self.batchSize:

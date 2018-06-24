@@ -22,11 +22,11 @@ out_bias_key = 'biases'
 
 
 class LSTM():
-    def restart(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm"):
+    def restart(self, input_size, rnn_size, output_size, alpha=-1, session=None, scope="lstm"):
         self = self.__class__(input_size, rnn_size, output_size, alpha, session, scope, self.input_batches, self.target_batches, self.store)
         return self
 
-    def __init__(self, input_size, rnn_size, output_size, alpha, session=None, scope="lstm", batch_x=None, batch_y=None, store=True):
+    def __init__(self, input_size, rnn_size, output_size, alpha=-1, session=None, scope="lstm", batch_x=None, batch_y=None, store=True):
         # storing scope name
         self.scope = aux.uniqeScope(scope)
 
@@ -60,7 +60,7 @@ class LSTM():
             x = self.reshapeData(self.xPH)
 
             self.lstm_layer = rnn_cell.BasicLSTMCell(self.rnn_size)
-            self.outputs, self.states = rnn.static_rnn(self.lstm_layer, x, dtype=tf.float32, sequence_length=[1])
+            self.outputs, self.state = rnn.static_rnn(self.lstm_layer, x, dtype=tf.float32, sequence_length=[1])
 
             W = tf.Variable(tf.random_normal([self.rnn_size, self.output_size]))
             b = tf.Variable(tf.random_normal([self.output_size]))
@@ -68,9 +68,9 @@ class LSTM():
             self.output_layer = {out_weights_key: W, out_bias_key: b}
 
             # saving lstm prediciton and state function (w.r.t. input placeholder)
-            (self.prediction, self.state) = self.neural_network_model(self.xPH)
+            self.prediction = self.neural_network_model(self.xPH)
             # setting cost function (in function of prediction and output placeholder for target values)
-            self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.prediction, labels=self.yPH))
+            self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.prediction, labels=self.yPH))
             # setting optimizer
             if alpha>0:
                 self.optimizer = tf.train.AdamOptimizer(learning_rate=alpha).minimize(self.cost)
@@ -115,7 +115,7 @@ class LSTM():
 
         output = tf.matmul(self.outputs[-1], self.output_layer['weights']) + self.output_layer['biases']
 
-        return (output, self.states[-1])
+        return output
 
     def add_batch(self, train_x):
         self.input_batches += train_x
@@ -128,11 +128,11 @@ class LSTM():
 
         fd = {self.xPH: np.array(self.input_batches if self.store else self.input_batches[0:len(self.target_batches)]), self.yPH: np.array(self.target_batches)}
 
-        prediction, state, _, c = (self.sess).run([self.prediction, self.state, self.optimizer, self.cost], feed_dict=fd)
+        prediction, _, c = (self.sess).run([self.prediction, self.optimizer, self.cost], feed_dict=fd)
         mes.currentMessage("Epoch loss: " + str(c))
 
         self.epoch += 1
-        return (prediction, state)
+        return (prediction)
 
     def predict(self, input=None):
         feed_dict = {self.xPH: np.array(self.input_batches + ([input] if input != None else []))}
@@ -143,12 +143,16 @@ class LSTM():
         return (self.predict(input))[-1][-1]
 
     def getState(self, input=None):
-        feed_dict = {self.xPH: np.array(self.input_batches + ([input] if input != None else []))}
+        feed_dict = {self.xPH: np.array([self.input_batches[-1] if not input else input])}
+
+        print(feed_dict)
+        print(self.input_size, self.rnn_size, self.output_size)
+        print(self.scope)
 
         return (self.sess).run([self.state], feed_dict)
 
     def getLastState(self, input=None):
-        return (self.getState(input))[-1][-1]
+        return (self.getState(input))[0][0]
 
     def getTensor(self, T):
         feed_dict = {self.xPH: np.array(self.input_batches)}
