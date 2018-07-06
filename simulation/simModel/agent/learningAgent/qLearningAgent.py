@@ -448,7 +448,11 @@ class hieararchy():
 
         norm = np.linalg.norm(pDist - self.bottleneck_data['mu'])/self.bottleneck_data['sd']
 
-        if norm > self.agent.livePar.BNBound:
+        print("\t\t NORM: " + str(norm))
+        b = input()
+
+        if False:
+
             self.task_abstraction(rs)
             self.bottleneck_data = self.make_bottleneck_data(2)
 
