@@ -128,6 +128,13 @@ class LSTM():
 
         fd = {self.xPH: np.array(self.input_batches if self.store else self.input_batches[0:len(self.target_batches)]), self.yPH: np.array(self.target_batches)}
 
+        print("----------------------------------------------------------------")
+
+        print("Shape yPH: " + str(self.sess.run(tf.shape(self.yPH), feed_dict=fd)))
+        #print("Shape value: " + str(self.sess.run(tf.shape(self.target_batches))))
+
+        print("----------------------------------------------------------------")
+
         prediction, _, c = (self.sess).run([self.prediction, self.optimizer, self.cost], feed_dict=fd)
         mes.currentMessage("Epoch loss: " + str(c))
 
@@ -143,13 +150,9 @@ class LSTM():
         return (self.predict(input))[-1][-1]
 
     def getState(self, input=None):
-        feed_dict = {self.xPH: np.array([self.input_batches[-1] if not input else input])}
+        feed_dict = {self.xPH: np.array(self.input_batches + ([input] if input != None else []))}
 
-        print(feed_dict)
-        print(self.input_size, self.rnn_size, self.output_size)
-        print(self.scope)
-
-        return (self.sess).run([self.state], feed_dict)
+        return (self.sess).run([self.state[0]], feed_dict)
 
     def getLastState(self, input=None):
         return (self.getState(input))[0][0]
