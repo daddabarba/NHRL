@@ -183,10 +183,6 @@ class batchQL(neuralQL):
 
             self.currentBatch = []
 
-
-            for net in self.Q:
-                net.
-
 #############
 #EXPLORATION#
 #############
