@@ -157,7 +157,7 @@ class neuralQL(qLA):
         return self.Q[rs].getLastState()
 
     def rec(self, rs):
-        self.Q[rs].add_batch([self.previous_state])
+        self.Q[rs].static_update(self.previous_state)
 
 class batchQL(neuralQL):
     def __init__(self, agent, rs, stateSize, nActions, batchSize, session=None):
@@ -182,6 +182,10 @@ class batchQL(neuralQL):
             self.last_action = save_action
 
             self.currentBatch = []
+
+
+            for net in self.Q:
+                net.
 
 #############
 #EXPLORATION#

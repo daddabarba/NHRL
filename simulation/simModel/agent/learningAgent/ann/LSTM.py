@@ -23,15 +23,15 @@ out_bias_key = 'biases'
 
 class LSTM():
     def restart(self, input_size, rnn_size, output_size, alpha=-1, session=None, scope="lstm"):
-        self = self.__class__(input_size, rnn_size, output_size, alpha, session, scope, self.input_batches, self.target_batches, self.store)
+        self = self.__class__(input_size, rnn_size, output_size, alpha, session, scope, self.cell, self.train_cell, self.batch)
         return self
 
-    def __init__(self, input_size, rnn_size, output_size, alpha=-1, session=None, scope="lstm", batch_x=None, batch_y=None, store=True):
+    def __init__(self, input_size, rnn_size, output_size, alpha=-1, session=None, scope="lstm", cell=None, train_cell=None, batch=True):
         # storing scope name
-        self.scope = aux.uniqeScope(scope)
+        self.scope = aux.uniqueScope(scope)
 
         self.alpha = alpha
-        self.store = store
+        self.batch = batch
 
         # setting hyperparameters
         self.input_size = input_size
@@ -42,37 +42,17 @@ class LSTM():
         self.epoch = 1
 
         # i/o placeholders
-        self.xPH = tf.placeholder('float', [None, self.input_size])
-        self.yPH = tf.placeholder('float')
-
-        # time series of inputs (and outputs)
-        if batch_x:
-            self.input_batches = batch_x
-        else:
-            self.input_batches = []
-
-        if batch_y:
-            self.target_batches = batch_y
-        else:
-            self.target_batches = []
+        self.xPH = tf.placeholder('float', shape=(None, self.input_size))
+        self.yPH = tf.placeholder('float', shape=(1, self.output_size))
 
         with tf.variable_scope(self.scope):
-            x = self.reshapeData(self.xPH)
-
-            self.lstm_layer = rnn_cell.BasicLSTMCell(self.rnn_size)
-            self.outputs, self.state = rnn.static_rnn(self.lstm_layer, x, dtype=tf.float32, sequence_length=[1])
-
-            W = tf.Variable(tf.random_normal([self.rnn_size, self.output_size]))
-            b = tf.Variable(tf.random_normal([self.output_size]))
-
-            self.output_layer = {out_weights_key: W, out_bias_key: b}
 
             # saving lstm prediciton and state function (w.r.t. input placeholder)
-            self.prediction = self.neural_network_model(self.xPH)
+            self.prediction = self.neural_network_model()
             # setting cost function (in function of prediction and output placeholder for target values)
             self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.prediction, labels=self.yPH))
             # setting optimizer
-            if alpha>0:
+            if alpha and alpha>0:
                 self.optimizer = tf.train.AdamOptimizer(learning_rate=alpha).minimize(self.cost)
             else:
                 self.optimizer = tf.train.AdamOptimizer().minimize(self.cost)
@@ -95,6 +75,14 @@ class LSTM():
                 if (v.name) in list(rnn_size.keys()):
                     self.override(v, rnn_size[v.name])
 
+        if cell:
+            self.sess.run(self.cell.c.assign(cell.c))
+            self.sess.run(self.cell.h.assign(cell.h))
+
+        if train_cell:
+            self.sess.run(self.train_cell.c.assign(train_cell.c))
+            self.sess.run(self.train_cell.h.assign(train_cell.h))
+
 
     # reshapres input tensors to the correct format
     def reshapeData(self, x):
@@ -102,7 +90,7 @@ class LSTM():
         x = tf.transpose(x, [1, 0])
         # split in time-steps
         x = tf.reshape(x, [-1, self.input_size])
-        x = tf.split(x, self.epoch)
+        x = tf.split(x, 1)
 
         return x
 
@@ -110,57 +98,74 @@ class LSTM():
         # return np.vstack([np.expand_dims(x, 0) for x in xs])
 
     # LSTM ANN function
-    def neural_network_model(self, x):
-        x = self.reshapeData(x)
+    def neural_network_model(self):
+        x = self.reshapeData(self.xPH)
 
-        output = tf.matmul(self.outputs[-1], self.output_layer['weights']) + self.output_layer['biases']
+        self.lstm_layer = rnn_cell.BasicLSTMCell(self.rnn_size)
 
-        return output
+        state_vars = self.lstm_layer.zero_state(1, dtype=tf.float32)
 
-    def add_batch(self, train_x):
-        self.input_batches += train_x
-        self.store = False
+        c = tf.Variable(state_vars.c, trainable=False)
+        h = tf.Variable(state_vars.h, trainable=False)
 
-    def train_neural_network(self, train_x, train_y):
-        if self.store:
-            self.input_batches.append(train_x)
-        self.target_batches.append(train_y)
+        self.cell = tf.contrib.rnn.LSTMStateTuple(c, h)
+        self.train_cell = tf.contrib.rnn.LSTMStateTuple(tf.Variable(c), tf.Variable(h))
 
-        fd = {self.xPH: np.array(self.input_batches if self.store else self.input_batches[0:len(self.target_batches)]), self.yPH: np.array(self.target_batches)}
+        self.outputs, self.state = rnn.static_rnn(self.lstm_layer, x, dtype=tf.float32, sequence_length=[1], initial_state=self.cell)
 
-        print("----------------------------------------------------------------")
+        W = tf.Variable(tf.random_normal([self.rnn_size, self.output_size]))
+        b = tf.Variable(tf.random_normal([self.output_size]))
 
-        print("Shape yPH: " + str(self.sess.run(tf.shape(self.yPH), feed_dict=fd)))
-        #print("Shape value: " + str(self.sess.run(tf.shape(self.target_batches))))
+        self.output_layer = {out_weights_key: W, out_bias_key: b}
 
-        print("----------------------------------------------------------------")
+        return tf.matmul(self.outputs[-1], self.output_layer[out_weights_key]) + self.output_layer[out_bias_key]
 
-        prediction, _, c = (self.sess).run([self.prediction, self.optimizer, self.cost], feed_dict=fd)
-        mes.currentMessage("Epoch loss: " + str(c))
+    def static_update(self, x):
+        self.set_state(self.getFullState(x))
 
-        self.epoch += 1
-        return (prediction)
+    def set_state(self, tuple):
+        aux.assignRNNTuple(self.sess, self.cell, tuple)
+        self.batch = True
 
-    def predict(self, input=None):
-        feed_dict = {self.xPH: np.array(self.input_batches + ([input] if input != None else []))}
+    def set_train_state(self, tuple):
+        aux.assignRNNTuple(self.sess, self.train_cell, tuple)
 
-        return (self.sess).run([self.prediction], feed_dict)
+    def train_neural_network(self, train_x, train_y, state=None):
 
-    def getLastPrediction(self, input=None):
-        return (self.predict(input))[-1][-1]
+        if not state:
+            if self.batch:
+                state = self.train_cell
+            else:
+                state = self.cell
 
-    def getState(self, input=None):
-        feed_dict = {self.xPH: np.array(self.input_batches + ([input] if input != None else []))}
+        with aux.tempAssign(self.sess, self.cell, state):
 
-        return (self.sess).run([self.state[0]], feed_dict)
+            fd = {self.xPH: np.array([train_x]), self.yPH: [train_y]}
 
-    def getLastState(self, input=None):
-        return (self.getState(input))[0][0]
+            prediction, _, c = (self.sess).run([self.prediction, self.optimizer, self.cost], feed_dict=fd)
+            mes.currentMessage("Epoch loss: " + str(c))
 
-    def getTensor(self, T):
-        feed_dict = {self.xPH: np.array(self.input_batches)}
+            self.epoch += 1
 
-        return self.sess.run(T, feed_dict)
+            self.set_train_state(self.getFullState(train_x))
+            self.set_state(self.train_cell)
+
+            return (prediction)
+
+    def predict(self, x):
+        fd = {self.xPH: np.array([x])}
+        return (self.sess).run([self.prediction], feed_dict=fd)
+
+    def getLastPrediction(self, x):
+        return (self.predict(x))[-1][-1]
+
+    def getFullState(self, x):
+        fd = {self.xPH: np.array([x])}
+        return (self.sess).run([self.state], feed_dict=fd)[-1]
+
+    def getLastState(self, x):
+        fd = {self.xPH: np.array([x])}
+        return (self.sess).run([self.state[0]], feed_dict=fd)[-1]
 
     def copyOutput(self, ind):
         new_shape = list(self.sess.run(tf.shape(self.output_layer[out_weights_key])) + [0, 1])
@@ -236,12 +241,6 @@ class LSTM():
         self.sess.run(tensor.assign(result))
 
         return tensor
-
-    def printVars(self):
-        vars = self.getVars()
-
-        for v in vars:
-            print(v.name)
 
     def getVars(self):
         return [v for v in tf.global_variables() if v.name.startswith(self.scope+'/')]
