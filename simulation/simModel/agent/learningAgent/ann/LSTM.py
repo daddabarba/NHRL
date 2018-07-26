@@ -163,9 +163,13 @@ class LSTM():
         fd = {self.xPH: np.array([x])}
         return (self.sess).run([self.state], feed_dict=fd)[-1]
 
-    def getLastState(self, x):
+    def getLastState(self, x=None):
+
+        if not x:
+            return self.sess.run(self.cell.c)
+
         fd = {self.xPH: np.array([x])}
-        return (self.sess).run([self.state[0]], feed_dict=fd)[-1]
+        return (self.sess).run([self.state.c], feed_dict=fd)[-1]
 
     def copyOutput(self, ind):
         new_shape = list(self.sess.run(tf.shape(self.output_layer[out_weights_key])) + [0, 1])

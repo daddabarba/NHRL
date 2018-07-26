@@ -135,7 +135,7 @@ class neuralQL(qLA):
         ((self.Q)[rs]).train_neural_network(state, target)
 
     def stateValues(self, state, rs):
-        return (((self.Q)[rs]).getLastPrediction(input=state) )
+        return (((self.Q)[rs]).getLastPrediction(state) )
 
     def _setQ(self, rs, stateSize, nActions):
         self.Q = []
