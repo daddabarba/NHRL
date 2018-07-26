@@ -23,8 +23,7 @@ out_bias_key = 'biases'
 
 class LSTM():
     def restart(self, input_size, rnn_size, output_size, alpha=-1, session=None, scope="lstm"):
-        self = self.__class__(input_size, rnn_size, output_size, alpha, session, scope, self.cell, self.train_cell, self.batch)
-        return self
+        return self.__class__(input_size, rnn_size, output_size, alpha, session, scope, self.cell, self.train_cell, self.batch)
 
     def __init__(self, input_size, rnn_size, output_size, alpha=-1, session=None, scope="lstm", cell=None, train_cell=None, batch=True):
         # storing scope name

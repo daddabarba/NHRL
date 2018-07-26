@@ -380,7 +380,7 @@ class hieararchy():
         return self.hierarchy[layer].getNNState(rs)
 
     def task_abstraction(self,rs):
-        print("abstracting task, current shape: ")
+        mes.currentMessage("abstracting task, current shape: ")
         self.printHierarchy()
 
         ANN = self.hierarchy[-1].Q[rs]
@@ -406,11 +406,20 @@ class hieararchy():
         self.hierarchy.append(batchBoltzmann(self.agent, 1, self.stateSize, 2, self.batch_size, self.sess))
         self.hierarchy[-1].Q[0] = new_ANN
 
-        print("\n final shape: ")
-        self.printHierarchy()
+        self.bottleneck_data = self.make_bottleneck_data(2)
+
+        self.policy_data.append([self.policy_data[-1][rs].copy()])
+        self.layer_data.append(self.layer_data[-1].copy())
+
+        self.policy_data[-2][rs]['sd'] *= 1.0 / 4.0
+        self.policy_data[-2][rs]['mu'] *= 1.0 / 2.0
+
+        self.policy_data[-2].append(self.policy_data[-2][rs].copy())
+
+        self.bottleneck_data['mu'] = np.array([0.5, 0.5])
 
     def action_abstraction(self, policy, layer):
-        print("\n abstracting action, current shape: ")
+        mes.currentMessage("\n abstracting action, current shape: ")
         self.printHierarchy()
 
         mes.currentMessage("Policy (" + str(layer) + "," + str(rs) + ") not specialized, splitting in subtasks")
@@ -425,9 +434,6 @@ class hieararchy():
         self.policy_data[layer][policy]['mu'] *= 1.0/2.0
 
         self.policy_data[layer].append(self.policy_data[layer][policy].copy())
-
-        print("\n final shape: ")
-        self.printHierarchy()
 
     def updateData(self, newState, policy, layer):
         self.policy_data[layer][policy] = stats.update_stats(self.policy_data[layer][policy], newState)
@@ -454,17 +460,6 @@ class hieararchy():
         if False:
 
             self.task_abstraction(rs)
-            self.bottleneck_data = self.make_bottleneck_data(2)
-
-            self.policy_data.append([self.policy_data[-1][rs].copy()])
-            self.layer_data.append(self.layer_data[-1].copy())
-
-            self.policy_data[-2][rs]['sd'] *= 1.0 / 4.0
-            self.policy_data[-2][rs]['mu'] *= 1.0 / 2.0
-
-            self.policy_data[-2].append(self.policy_data[-2][rs].copy())
-
-            self.bottleneck_data = stats.update_stats(self.bottleneck_data, [0.5,0.5])
 
         else:
 
