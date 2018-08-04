@@ -327,17 +327,19 @@ class batchBoltzmann(boltzmann, batchQL):
 
 class hieararchy():
 
-    def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
+    def __init__(self, agent, policyClass, stateSize, batchSize, nActions=None, structure=[1]):
         self.agent = agent
         self.batch_size = batchSize
         self.stateSize = stateSize
+
+        self.policyClass = policyClass
 
         if nActions:
             structure = [nActions] + structure
 
         self.hierarchy = []
         for i in range(1,len(structure)):
-            layer = batchBoltzmann(agent, structure[i], stateSize, structure[i-1], batchSize)
+            layer = policyClass(agent, structure[i], stateSize, structure[i-1], batchSize)
             self.hierarchy.append(layer)
 
         report_template = {'sd': 0.0, 'mu': np.zeros(_defRnnSize), 'N': 0}
@@ -411,7 +413,7 @@ class hieararchy():
 
         mes.warningMessage("Restaring top policy")
 
-        self.hierarchy.append(batchBoltzmann(self.agent, 1, self.stateSize, 2, self.batch_size, None))
+        self.hierarchy.append(self.policyClass(self.agent, 1, self.stateSize, 2, self.batch_size, None))
         self.hierarchy[-1].Q[0] = self.hierarchy[-1].Q[0].restart(ANN.input_size, rnn, W_pars, ANN.alpha, None, ANN.scope)
 
         mes.currentMessage("Adjusting stats")
@@ -489,3 +491,8 @@ class hieararchy():
         for layer in self.hierarchy:
             print(str(len(layer.Q)) + " , ", end="")
         print(" ")
+
+
+class hBatchBoltzmann(hieararchy):
+    def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
+        super(hBatchBoltzmann, self).__init__(agent, batchBoltzmann, stateSize, batchSize, nActions, structure)

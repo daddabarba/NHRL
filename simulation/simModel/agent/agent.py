@@ -50,7 +50,7 @@ class agent:
         self.rsSize = 1 if not isinstance(currentGState,list) else len(currentGState)                             #PARAMETRIZE
 
         mes.settingMessage("Action-state values table")
-        self.qAgent = qLA.hieararchy(self, len(self.currentState), self.livePar.batchSize, nActions=self.environment.world.numActions, structure=[self.rsSize])
+        self.qAgent = qLA.hBatchBoltzmann(self, len(self.currentState), self.livePar.batchSize, nActions=self.environment.world.numActions, structure=[self.rsSize])
         mes.setMessage("Action-state values table")
 
         self.graphic = graphic
