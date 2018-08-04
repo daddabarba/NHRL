@@ -567,3 +567,7 @@ class hieararchy():
 class hBatchBoltzmann(hieararchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
         super(hBatchBoltzmann, self).__init__(agent, batchBoltzmann, stateSize, batchSize, nActions, structure)
+
+class hTDBoltzmann(hieararchy):
+    def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
+        super(hTDBoltzmann, self).__init__(agent, tdBoltzmann, stateSize, batchSize, nActions, structure)
