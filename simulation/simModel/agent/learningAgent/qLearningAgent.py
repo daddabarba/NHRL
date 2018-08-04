@@ -387,6 +387,10 @@ class batchBoltzmann(boltzmann, batchQL):
     def __init__(self, agent, rs, r, c, batchSize, session=None):
         super(batchBoltzmann, self).__init__(agent, rs, r, c, batchSize, session)
 
+class tdBoltzmann(boltzmann, temporalDifference):
+    def __init__(self, agent, rs, r, c, _lambda, session=None):
+        super(tdBoltzmann, self).__init__(agent, rs, r, c, _lambda, session)
+
 
 #####################################
 #HIERARCHICAL REINFORCEMENT LEARNING#
