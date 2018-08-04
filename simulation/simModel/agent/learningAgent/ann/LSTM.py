@@ -249,3 +249,6 @@ class LSTM():
 
     def getVars(self):
         return [v for v in tf.global_variables() if v.name.startswith(self.scope+'/')]
+
+    def __del__(self):
+        self.sess.close()
