@@ -327,7 +327,7 @@ class batchBoltzmann(boltzmann, batchQL):
 
 class hieararchy():
 
-    def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1], session=None):
+    def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
         self.agent = agent
         self.batch_size = batchSize
         self.stateSize = stateSize
@@ -335,13 +335,9 @@ class hieararchy():
         if nActions:
             structure = [nActions] + structure
 
-        if not session:
-            session = tf.Session()
-        self.sess = session
-
         self.hierarchy = []
         for i in range(1,len(structure)):
-            layer = batchBoltzmann(agent, structure[i], stateSize, structure[i-1], batchSize, self.sess)
+            layer = batchBoltzmann(agent, structure[i], stateSize, structure[i-1], batchSize)
             self.hierarchy.append(layer)
 
         report_template = {'sd': 0.0, 'mu': np.zeros(_defRnnSize), 'N': 0}
@@ -357,8 +353,6 @@ class hieararchy():
         if not layer and layer!=0:
             layer = len(self.hierarchy) - 1
 
-        print("Current layer " + str(layer) + "/" + str(len(self.hierarchy)-1) + " on rs: " + str(rs) + "/" + str(len(self.hierarchy[layer].Q)-1))
-
         action = self.hierarchy[layer].policy(state, rs)
 
 
@@ -371,7 +365,7 @@ class hieararchy():
         self.updateData(abstract_state, rs, layer)
 
         if layer!=0:
-            print("action: " + str(action) + "/" + str(len(self.hierarchy[layer - 1].Q)-1))
+            mes.currentMessage("action: " + str(action) + "/" + str(len(self.hierarchy[layer - 1].Q)-1))
             return self.policy(state, action, layer-1)
 
         return action
@@ -380,31 +374,47 @@ class hieararchy():
         return self.hierarchy[layer].getNNState(rs)
 
     def task_abstraction(self,rs):
-        mes.currentMessage("abstracting task, current shape: ")
-        self.printHierarchy()
+
+        mes.warningMessage("Getting network's parameters")
 
         ANN = self.hierarchy[-1].Q[rs]
         parameters = ANN.getCopy()
+
+        mes.warningMessage("unrolling parameters")
 
         W = parameters['out'][lstm.out_weights_key]
         b = parameters['out'][lstm.out_bias_key]
         rnn = parameters['rnn']
 
+        mes.warningMessage("Getting network shape")
+
         size = (np.shape(W)[1])
+
+        mes.warningMessage("Computing new weights")
 
         new_w = (W * (1 / size)).sum(1)
         new_W = np.transpose(np.array([new_w, new_w]))
 
+        mes.warningMessage("Computing new biases")
+
         _b = (b*size).sum()
         new_b = np.array([_b, _b])
 
+        mes.warningMessage("Rolling weights and biases")
+
         W_pars = {lstm.out_weights_key: new_W, lstm.out_bias_key: new_b}
 
-        (self.hierarchy)[-1].copyPolicy(rs)
-        new_ANN = ANN.restart(ANN.input_size, rnn, W_pars, ANN.alpha, self.sess, ANN.scope)
+        mes.warningMessage("Copying policy")
 
-        self.hierarchy.append(batchBoltzmann(self.agent, 1, self.stateSize, 2, self.batch_size, self.sess))
-        self.hierarchy[-1].Q[0] = new_ANN
+        (self.hierarchy)[-1].copyPolicy(rs)
+        #new_ANN = ANN.restart(ANN.input_size, rnn, W_pars, ANN.alpha, self.sess, ANN.scope)
+
+        mes.warningMessage("Restaring top policy")
+
+        self.hierarchy.append(batchBoltzmann(self.agent, 1, self.stateSize, 2, self.batch_size, None))
+        self.hierarchy[-1].Q[0] = self.hierarchy[-1].Q[0].restart(ANN.input_size, rnn, W_pars, ANN.alpha, None, ANN.scope)
+
+        mes.currentMessage("Adjusting stats")
 
         self.bottleneck_data = self.make_bottleneck_data(2)
 
@@ -478,3 +488,4 @@ class hieararchy():
     def printHierarchy(self):
         for layer in self.hierarchy:
             print(str(len(layer.Q)) + " , ", end="")
+        print(" ")

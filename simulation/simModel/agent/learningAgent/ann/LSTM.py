@@ -68,6 +68,8 @@ class LSTM():
             self.override(self.output_layer[out_bias_key], output_size[out_bias_key])
 
         if type(rnn_size) == type({}):
+            mes.currentMessage("Overriding RNN weights")
+
             rnn_size = dict([(self.scope + '/' + name, val) for (name, val) in rnn_size.items()])
 
             for v in tf.global_variables():
@@ -193,7 +195,7 @@ class LSTM():
     def copyNetwork(self):
         parameters = self.getCopy()
 
-        return self.restart(self.input_size, parameters['rnn'], parameters['out'], self.alpha, self.sess, self.scope)
+        return self.restart(self.input_size, parameters['rnn'], parameters['out'], self.alpha, None, self.scope)
 
     def getCopy(self):
 
@@ -247,6 +249,3 @@ class LSTM():
 
     def getVars(self):
         return [v for v in tf.global_variables() if v.name.startswith(self.scope+'/')]
-
-    def __del__(self):
-        self.sess.close()
