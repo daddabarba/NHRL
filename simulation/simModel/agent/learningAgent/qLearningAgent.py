@@ -67,7 +67,7 @@ class qLA():
         mes.currentMessage("learning from transition <" + str(s1) + " , " + str(a) + " , " + str(s2) + " , " + str(r) + ">")
 
         _alpha = self.agent.livePar.learningRate
-        _lambda = self.agent.livePar.discountFactor
+        _gamma = self.agent.livePar.discountFactor
 
         for i in range(len(self.Q)):
             if r[i]:
@@ -75,7 +75,7 @@ class qLA():
 
                 mes.currentMessage("computing new state action value")
                 memory = (_alpha) * (self.stateActionValue(s1,a,i))  #((self.Q)[i][s1][a])
-                learning = (1 - _alpha) * self.updateValue(r[i], _lambda, valueNext)
+                learning = (1 - _alpha) * self.updateValue(r[i], _gamma, valueNext)
 
                 mes.settingMessage("new state action value")
                 #(self.Q)[i][s1][a] = memory + learning
@@ -83,8 +83,8 @@ class qLA():
 
                 mes.setMessage("new state action value")
 
-    def updateValue(self, observations, _lambda, prediction):
-        return observations + _lambda*prediction
+    def updateValue(self, observations, _gamma, prediction):
+        return observations + _gamma*prediction
 
     def updateQ(self, state, action, update, rs):
         (self.Q)[rs][state][action] = update
@@ -186,6 +186,69 @@ class batchQL(neuralQL):
 
             self.currentBatch = []
 
+
+class temporalDifference(neuralQL):
+
+    class tdObservation:
+        def __init__(self, gamma):
+            self.reset()
+            self.gamma = gamma
+
+        def update(self, val, action, state):
+            self.exp += 1
+            self.value += val*(self.gamma**self.exp)
+
+            if not self.start:
+                self.start = state
+                self.action = action
+
+        def reset(self):
+            self.value = 0.0
+            self.exp = -1
+
+            self.start = None
+            self.action = None
+
+    def __init__(self, agent, rs, stateSize, nActions, _lambda, session=None):
+        super(temporalDifference, self).__init__(agent, rs, stateSize, nActions, session)
+
+        gamma = agent.livePar.discountFactor
+
+        self._lambda = _lambda
+        self.observations = [tdObservation(gamma) for i in range(len(self.Q))]
+
+    def learn(self, newState, r):
+
+        if type(r) == type(0.0):
+            r = [r]*(len(self.Q))
+
+        if type(r) == tuple:
+            vec_r = [None for i in range(len(self.Q))]
+            vec_r[r[0]] = r[1]
+            r = vec_r
+
+        for i in len(r):
+
+            if self.observations[i].exp == (self._lambda-1):
+                save_action = self.last_action
+                save_state = self.previous_state
+
+                self.previous_state = self.observations[i].start
+                self.last_action = self.observations[i].action
+
+                super(temporalDifference, self).learn(newState, self.observations[i].value)
+
+                self.previous_state = save_state
+                self.last_action = save_action
+
+                self.observations[i].reset()
+            else:
+                self.observations[i].update(r[i], self.last_action, newState)
+
+    def updateValue(self, observations, _gamma, prediction):
+        return observations + (_gamma**self._lambda) * prediction
+
+
 #############
 #EXPLORATION#
 #############
@@ -261,6 +324,7 @@ class boltzmann(simAnneal):
             self.last_policy = rs
 
         return a
+
 
 class interestQLA(qLA):
     def __init__(self, agent, rs, r, c):
