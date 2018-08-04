@@ -75,13 +75,16 @@ class qLA():
 
                 mes.currentMessage("computing new state action value")
                 memory = (_alpha) * (self.stateActionValue(s1,a,i))  #((self.Q)[i][s1][a])
-                learning = (1 - _alpha) * (r[i] + _lambda * (valueNext))
+                learning = (1 - _alpha) * self.updateValue(r[i], _lambda, valueNext)
 
                 mes.settingMessage("new state action value")
                 #(self.Q)[i][s1][a] = memory + learning
                 self.updateQ(s1,a, memory+learning, i)
 
                 mes.setMessage("new state action value")
+
+    def updateValue(self, observations, _lambda, prediction):
+        return observations + _lambda*prediction
 
     def updateQ(self, state, action, update, rs):
         (self.Q)[rs][state][action] = update
