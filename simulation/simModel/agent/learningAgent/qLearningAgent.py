@@ -160,6 +160,7 @@ class neuralQL(qLA):
         return self.Q[rs].getLastState()
 
     def rec(self, rs):
+        print("RECCCCCC.......................")
         self.Q[rs].static_update(self.previous_state)
 
 class batchQL(neuralQL):
@@ -298,6 +299,8 @@ class boltzmann(simAnneal):
         return (self.getPDist(state, rs)*self.stateValues(state,rs)).sum();
 
     def policy(self, state, rs, learning=False):
+        print("BOLTZMANNNNNN POLICY")
+
         probabilities = self.getPDist(state,rs)
         dice = rand.uniform(a=0.0, b=1.0)
 
@@ -387,9 +390,19 @@ class batchBoltzmann(boltzmann, batchQL):
     def __init__(self, agent, rs, r, c, batchSize, session=None):
         super(batchBoltzmann, self).__init__(agent, rs, r, c, batchSize, session)
 
+    def policy(self, state, rs, learning=False):
+        super(batchBoltzmann, self).policy(state, rs, learning)
+
+        self.rec(rs)
+
 class tdBoltzmann(boltzmann, temporalDifference):
     def __init__(self, agent, rs, r, c, _lambda, session=None):
         super(tdBoltzmann, self).__init__(agent, rs, r, c, _lambda, session)
+
+    def policy(self, state, rs, learning=False):
+        super(tdBoltzmann, self).policy(state, rs, learning)
+
+        self.rec(rs)
 
 
 #####################################
@@ -427,12 +440,10 @@ class hieararchy():
             layer = len(self.hierarchy) - 1
 
         action = self.hierarchy[layer].policy(state, rs)
-
+        self.hierarchy[layer].rec(rs)
 
         if layer == len(self.hierarchy) - 1:
             self.updateBNData(state, rs)
-
-        self.hierarchy[layer].rec(rs)
 
         abstract_state = self.state_abstraction(state, layer, rs)
         self.updateData(abstract_state, rs, layer)
