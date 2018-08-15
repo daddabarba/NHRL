@@ -170,7 +170,7 @@ class batchQL(neuralQL):
         self.batchSize = batchSize
         self.currentBatch = []
 
-    def  learn(self, newState, reward):
+    def learn(self, newState, reward):
         self.currentBatch.append(((self.previous_state,self.last_action, newState), reward))
 
         if len(self.currentBatch)>=self.batchSize:
@@ -216,7 +216,7 @@ class temporalDifference(neuralQL):
         gamma = agent.livePar.discountFactor
 
         self._lambda = _lambda
-        self.observations = [tdObservation(gamma) for i in range(len(self.Q))]
+        self.observations = [self.tdObservation(gamma) for i in range(len(self.Q))]
 
     def learn(self, newState, r):
 
