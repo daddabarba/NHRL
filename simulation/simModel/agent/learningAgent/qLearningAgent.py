@@ -160,7 +160,6 @@ class neuralQL(qLA):
         return self.Q[rs].getLastState()
 
     def rec(self, rs):
-        print("RECCCCCC.......................")
         self.Q[rs].static_update(self.previous_state)
 
 class batchQL(neuralQL):
@@ -228,7 +227,7 @@ class temporalDifference(neuralQL):
             vec_r[r[0]] = r[1]
             r = vec_r
 
-        for i in len(r):
+        for i in range(len(r)):
 
             if self.observations[i].exp == (self._lambda-1):
                 save_action = self.last_action
@@ -299,8 +298,6 @@ class boltzmann(simAnneal):
         return (self.getPDist(state, rs)*self.stateValues(state,rs)).sum();
 
     def policy(self, state, rs, learning=False):
-        print("BOLTZMANNNNNN POLICY")
-
         probabilities = self.getPDist(state,rs)
         dice = rand.uniform(a=0.0, b=1.0)
 
@@ -400,9 +397,10 @@ class tdBoltzmann(boltzmann, temporalDifference):
         super(tdBoltzmann, self).__init__(agent, rs, r, c, _lambda, session)
 
     def policy(self, state, rs, learning=False):
-        super(tdBoltzmann, self).policy(state, rs, learning)
+        ret = super(tdBoltzmann, self).policy(state, rs, learning)
 
         self.rec(rs)
+        return ret
 
 
 #####################################

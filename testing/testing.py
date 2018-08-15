@@ -94,13 +94,16 @@ while (os.path.exists(_testDirPath + '_' + str(testN))):
 
 for testNIter in range(testN,testN+pars.nExperiments):
 
-    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName), pars=pars.parsFile ,graphic=0, suppressPrint=False)
+    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName), pars=pars.parsFile ,graphic=1, suppressPrint=True)
 
     pT = []
     pR = []
     pU = []
 
     for k in range(pars.iterations):
+
+        print("Iteration: " + str(k))
+
         time = 0
         r = a.livePar.baseReward
         accumulatedReward = 0
@@ -126,6 +129,8 @@ for testNIter in range(testN,testN+pars.nExperiments):
         pU.append(good_use/pars.visa)
 
         a.environment.pullUpAgent()
+
+        a.environment.graphic.cleanTrack()
 
 
     os.makedirs(_testDirPath + '_' + str(testNIter))
