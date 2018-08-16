@@ -16,17 +16,17 @@ _defSA = 10
 _defSB = -4.5
 _defSThresh = 285.0
 
-_defHeight = 15.0
-_defLowerBound = 5.0
-_defStartPoint = 10
-_defSpeed = 0.03
+_defHeight = 500
+_defLowerBound = 0.01
+_defStartPoint = 2
+_defSpeed = 0.02
 
 _defIA = 100.0
 _defIB = 5.0
 _defIC = 1.0
 _defILowBound = 0.0
 
-_defLearningRate = 0.0
+_defLearningRate = 0.38
 _defDiscountFactor = 0.98
 
 _defNeuralLearningRate = -1
