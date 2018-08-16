@@ -19,6 +19,8 @@ import messages as mes
 
 import vecStats as stats
 
+import aux
+
 _defRnnSize = 5
 
 class qLA():
@@ -56,13 +58,12 @@ class qLA():
         a = self.last_action
         s2 = newState
 
-        if type(r) == type(0.0):
-            r = [r]*(len(self.Q))
-
         if type(r) == tuple:
             vec_r = [None for i in range(len(self.Q))]
             vec_r[r[0]] = r[1]
             r = vec_r
+        elif type(r)!= list:
+            r = [r] * (len(self.Q))
 
         mes.currentMessage("learning from transition <" + str(s1) + " , " + str(a) + " , " + str(s2) + " , " + str(r) + ">")
 
@@ -173,16 +174,9 @@ class batchQL(neuralQL):
         self.currentBatch.append(((self.previous_state,self.last_action, newState), reward))
 
         if len(self.currentBatch)>=self.batchSize:
-            save_action = self.last_action
-            save_state = self.previous_state
-
             for ((s1,a,s2),r) in self.currentBatch:
-                self.previous_state = s1
-                self.last_action = a
-                super(batchQL, self).learn(s2,r)
-
-            self.previous_state = save_state
-            self.last_action = save_action
+                with aux.tempTransition(self, s1, a):
+                    super(batchQL, self).learn(s2,r)
 
             self.currentBatch = []
 
@@ -190,24 +184,46 @@ class batchQL(neuralQL):
 class temporalDifference(neuralQL):
 
     class tdObservation:
-        def __init__(self, gamma):
-            self.reset()
+        def __init__(self, gamma, _lambda):
+
+            self.R = []
+            self.P = []
+
             self.gamma = gamma
+            self._lambda = _lambda
+
+            self.tot = 0
 
         def update(self, val, action, state):
-            self.exp += 1
-            self.value += val*(self.gamma**self.exp)
+            self.R.append(val)
+            self.P.append((state, action))
 
-            if not self.start:
-                self.start = state
-                self.action = action
+            if self.isExceeding():
+                self.tot -= self.R[0]
 
-        def reset(self):
-            self.value = 0.0
-            self.exp = -1
+                del self.R[0]
+                del self.P[0]
 
-            self.start = None
-            self.action = None
+                self.tot *= (1/self.gamma)
+                self.tot += val*(self.gamma**self._lambda)
+
+            else:
+                self.tot += val*(self.gamma**(len(self.R)-1))
+
+        def getVal(self):
+            return self.tot
+
+        def getState(self):
+            return self.P[0][0]
+
+        def getAction(self):
+            return self.P[0][1]
+
+        def isFull(self):
+            return len(self.R)==(self._lambda+1)
+
+        def isExceeding(self):
+            return len(self.R)>(self._lambda+1)
 
     def __init__(self, agent, rs, stateSize, nActions, _lambda, session=None):
         super(temporalDifference, self).__init__(agent, rs, stateSize, nActions, session)
@@ -215,38 +231,29 @@ class temporalDifference(neuralQL):
         gamma = agent.livePar.discountFactor
 
         self._lambda = _lambda
-        self.observations = [self.tdObservation(gamma) for i in range(len(self.Q))]
+        self.observations = [self.tdObservation(gamma, _lambda) for i in range(len(self.Q))]
 
     def learn(self, newState, r):
 
         if type(r) == type(0.0):
-            r = [r]*(len(self.Q))
+            r = [r] * (len(self.Q))
 
         if type(r) == tuple:
             vec_r = [None for i in range(len(self.Q))]
             vec_r[r[0]] = r[1]
             r = vec_r
 
-        for i in range(len(r)):
+        for rs in range(len(r)):
+            if r[rs]:
+                self.observations[rs].update(r[rs], self.last_action, self.previous_state)
 
-            if self.observations[i].exp == (self._lambda-1):
-                save_action = self.last_action
-                save_state = self.previous_state
+                if self.observations[rs].isFull():
+                    with aux.tempTransition(self, self.observations[rs].getState(), self.observations[rs].getAction(), rs):
+                        super(temporalDifference, self).learn(newState, self.observations[rs].getVal())
 
-                self.previous_state = self.observations[i].start
-                self.last_action = self.observations[i].action
-
-                super(temporalDifference, self).learn(newState, self.observations[i].value)
-
-                self.previous_state = save_state
-                self.last_action = save_action
-
-                self.observations[i].reset()
-            else:
-                self.observations[i].update(r[i], self.last_action, newState)
 
     def updateValue(self, observations, _gamma, prediction):
-        return observations + (_gamma**self._lambda) * prediction
+        return observations + (_gamma**(self._lambda+1)) * prediction
 
 
 #############

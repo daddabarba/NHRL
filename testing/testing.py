@@ -105,7 +105,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     for k in range(pars.iterations):
 
-        it_desc = "Iteration: %d/%d" % (k+1, pars.iterations)
+        it_desc = " Iteration: %d/%d" % (k+1, pars.iterations)
 
         time = 0
         r = a.livePar.baseReward
@@ -118,7 +118,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
             r = a.rewardHistory[-1][0]
             accumulatedReward += r
 
-            print(it_desc+" - #steps: %d\r"%time, end="")
+            print(it_desc+"\t #steps: %d\r"%time, end="")
 
         extra_time = 1
         good_use = 0
