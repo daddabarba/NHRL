@@ -39,7 +39,7 @@ else:
     a = agent.agent(graphic = pars.GUI, suppressPrint=pars.noPrint)
 
 def seqActions():
-    nSteps = 500
+    nSteps = 1
 
     while nSteps > 0:
         nSteps = defInput("Insert number of steps: ", nSteps)
