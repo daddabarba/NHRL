@@ -35,7 +35,7 @@ class qLA():
         self.previous_state = None
         self.last_action = None
 
-        self.last_policy = None
+        self.last_policy = None if self.size()>1 else 0
 
     def policy(self, state, rs, learning=False):
         (a, stateValue) = self.argMaxQ(state, rs)
@@ -111,6 +111,9 @@ class qLA():
         len = max - min
 
         self.Q = ((np.random.rand(rs, r, c)) * len) + min
+
+    def size(self):
+        return len(self.Q)
 
     def reset(self):
         self._setQ(self.agent.rsSize, self.nStates, self.nActions)
@@ -256,7 +259,7 @@ class temporalDifference(neuralQL):
 
                 if self.observations[rs].isFull():
                     with aux.tempTransition(self, self.observations[rs].getState(), self.observations[rs].getAction(), rs):
-                        super(temporalDifference, self).learn(newState, self.observations[rs].getVal())
+                        super(temporalDifference, self).learn(newState, (rs,self.observations[rs].getVal()))
 
 
     def updateValue(self, observations, _gamma, prediction):
@@ -529,13 +532,13 @@ class hieararchy():
         mes.currentMessage("\n abstracting action, current shape: ")
         self.printHierarchy()
 
-        mes.currentMessage("Policy (" + str(layer) + "," + str(rs) + ") not specialized, splitting in subtasks")
+        mes.currentMessage("Policy (" + str(layer) + "," + str(policy) + ") not specialized, splitting in subtasks")
 
         if layer == len(self.hierarchy) - 1: #ACTUALLY IMPOSSIBLE
             return
 
-        self.hierarchy[layer + 1].copyAction(rs)
-        self.hierarchy[layer].copyPolicy(rs)
+        self.hierarchy[layer + 1].copyAction(policy)
+        self.hierarchy[layer].copyPolicy(policy)
 
         self.policy_data[layer][policy]['sd'] *= 1.0/4.0
         self.policy_data[layer][policy]['mu'] *= 1.0/2.0
@@ -561,11 +564,7 @@ class hieararchy():
 
         norm = np.linalg.norm(pDist - self.bottleneck_data['mu'])/self.bottleneck_data['sd']
 
-        print("\t\t NORM: " + str(norm))
-        b = input()
-
-        if False:
-
+        if norm>self.agent.livePar.BNBound:
             self.task_abstraction(rs)
 
         else:
@@ -573,9 +572,15 @@ class hieararchy():
             self.bottleneck_data = stats.update_stats(self.bottleneck_data, pDist)
 
     def learn(self, newState, r):
+
+        if type(r)==list:
+            r = r[0]
+
         for layer in self.hierarchy:
-            reward = (layer.last_policy, r)
-            layer.learn(newState, reward)
+
+            if layer.last_policy or layer.last_policy == 0:
+                reward = (layer.last_policy, r)
+                layer.learn(newState, reward)
 
     def reset(self):
         for layer in self.hierarchy:
