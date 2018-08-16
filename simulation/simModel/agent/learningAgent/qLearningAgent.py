@@ -208,6 +208,12 @@ class temporalDifference(neuralQL):
                 self.tot *= (1/self.gamma)
                 self.tot += val*(self.gamma**self._lambda)
 
+                if len(self.R)>(10*self._lambda):
+                    self.R = self.R[::-1][0:self._lambda][::-1]
+                    self.P = self.P[::-1][0:self._lambda][::-1]
+
+                    self.start = 0
+
             else:
                 self.tot += val*(self.gamma**(len(self.R)-1))
 
