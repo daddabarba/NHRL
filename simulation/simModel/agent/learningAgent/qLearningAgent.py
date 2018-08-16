@@ -300,8 +300,8 @@ class simAnneal(qLA):
         return a
 
 class boltzmann(simAnneal):
-    def _val(self, t):
-        t = self.agent.livePar.startPoint - self.agent.livePar.speed*t
+    def _val(self, time):
+        t = self.agent.livePar.startPoint - self.agent.livePar.speed*time
         return ((np.e**t)/((np.e**t)+1))*self.agent.livePar.height + self.agent.livePar.lowBound
 
     def getPDist(self, state, rs):
