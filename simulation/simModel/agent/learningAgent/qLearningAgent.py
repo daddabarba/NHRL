@@ -194,15 +194,16 @@ class temporalDifference(neuralQL):
 
             self.tot = 0
 
+            self.start = 0
+
         def update(self, val, action, state):
             self.R.append(val)
             self.P.append((state, action))
 
             if self.isExceeding():
-                self.tot -= self.R[0]
+                self.tot -= self.R[self.start]
 
-                del self.R[0]
-                del self.P[0]
+                self.start += 1
 
                 self.tot *= (1/self.gamma)
                 self.tot += val*(self.gamma**self._lambda)
@@ -214,10 +215,10 @@ class temporalDifference(neuralQL):
             return self.tot
 
         def getState(self):
-            return self.P[0][0]
+            return self.P[self.start][0]
 
         def getAction(self):
-            return self.P[0][1]
+            return self.P[self.start][1]
 
         def isFull(self):
             return len(self.R)==(self._lambda+1)
