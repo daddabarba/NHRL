@@ -395,9 +395,10 @@ class batchBoltzmann(boltzmann, batchQL):
         super(batchBoltzmann, self).__init__(agent, rs, r, c, batchSize, session)
 
     def policy(self, state, rs, learning=False):
-        super(batchBoltzmann, self).policy(state, rs, learning)
+        ret = super(batchBoltzmann, self).policy(state, rs, learning)
 
         self.rec(rs)
+        return ret
 
 class tdBoltzmann(boltzmann, temporalDifference):
     def __init__(self, agent, rs, r, c, _lambda, session=None):
