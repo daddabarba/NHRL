@@ -24,6 +24,9 @@ import matplotlib.pyplot as plt
 import agent
 
 
+graphic = False
+printSupp = True
+
 class SysPars():
     def __init__(self):
         self.name = None
@@ -94,7 +97,7 @@ while (os.path.exists(_testDirPath + '_' + str(testN))):
 
 for testNIter in range(testN,testN+pars.nExperiments):
 
-    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName), pars=pars.parsFile ,graphic=1, suppressPrint=True)
+    a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName), pars=pars.parsFile, graphic=graphic, suppressPrint=printSupp)
 
     pT = []
     pR = []
@@ -102,7 +105,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     for k in range(pars.iterations):
 
-        print("Iteration: " + str(k))
+        it_desc = "Iteration: %d/%d" % (k+1, pars.iterations)
 
         time = 0
         r = a.livePar.baseReward
@@ -114,6 +117,8 @@ for testNIter in range(testN,testN+pars.nExperiments):
             time += 1
             r = a.rewardHistory[-1][0]
             accumulatedReward += r
+
+            print(it_desc+" - #steps: %d\r"%time, end="")
 
         extra_time = 1
         good_use = 0
@@ -130,7 +135,10 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
         a.environment.pullUpAgent()
 
-        a.environment.graphic.cleanTrack()
+        if graphic:
+            a.environment.graphic.cleanTrack()
+
+        print(" ")
 
 
     os.makedirs(_testDirPath + '_' + str(testNIter))
