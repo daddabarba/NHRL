@@ -6,6 +6,9 @@ def l(v):
 def update_mean(mean, N, new_point):
     return (mean*N + new_point)*(1.0/(N+1))
 
+def reshape_mean(mean):
+    return mean+[0.0]
+
 def update_stats(data, new_point):
     N_t_0 = data['N']
 

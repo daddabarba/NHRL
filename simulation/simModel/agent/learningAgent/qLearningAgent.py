@@ -529,9 +529,7 @@ class hieararchy():
         self.bottleneck_data['mu'] = np.array([0.5, 0.5])
 
     def action_abstraction(self, policy, layer):
-        mes.currentMessage("\n abstracting action, current shape: ")
-        self.printHierarchy()
-
+        mes.currentMessage("Abstracting action")
         mes.currentMessage("Policy (" + str(layer) + "," + str(policy) + ") not specialized, splitting in subtasks")
 
         if layer == len(self.hierarchy) - 1: #ACTUALLY IMPOSSIBLE
@@ -544,6 +542,9 @@ class hieararchy():
         self.policy_data[layer][policy]['mu'] *= 1.0/2.0
 
         self.policy_data[layer].append(self.policy_data[layer][policy].copy())
+
+        if layer == len(self.hierarchy)-2:
+            self.bottleneck_data['mu'] = stats.reshape_mean(self.bottleneck_data['mu'])
 
     def updateData(self, newState, policy, layer):
         self.policy_data[layer][policy] = stats.update_stats(self.policy_data[layer][policy], newState)
@@ -573,12 +574,18 @@ class hieararchy():
 
     def learn(self, newState, r):
 
+        mes.currentMessage("Broadcasting reward to previous policy firing chain")
+
         if type(r)==list:
             r = r[0]
 
         for layer in self.hierarchy:
 
+            mes.currentMessage("Current layer: %d"%self.hierarchy.index(layer))
+
             if layer.last_policy or layer.last_policy == 0:
+                mes.currentMessage("Reward sent")
+
                 reward = (layer.last_policy, r)
                 layer.learn(newState, reward)
 
