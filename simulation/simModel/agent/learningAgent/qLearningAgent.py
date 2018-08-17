@@ -478,7 +478,7 @@ class hieararchy():
     def state_abstraction(self, state, layer, rs):
         return self.hierarchy[layer].getNNState(rs)
 
-    def task_abstraction(self,rs):
+    def task_abstraction(self, rs=0):
 
         mes.warningMessage("Getting network's parameters")
 
@@ -572,7 +572,7 @@ class hieararchy():
         norm = np.linalg.norm(pDist - self.bottleneck_data['mu'])/self.bottleneck_data['sd']
 
         if norm>self.agent.livePar.BNBound:
-            self.task_abstraction(rs)
+            self.task_abstraction()
 
         else:
 
