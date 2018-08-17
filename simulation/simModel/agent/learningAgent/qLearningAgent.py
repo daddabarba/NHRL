@@ -432,12 +432,14 @@ class tdBoltzmann(boltzmann, temporalDifference):
 
 class hieararchy():
 
-    def __init__(self, agent, policyClass, stateSize, batchSize, nActions=None, structure=[1]):
+    def __init__(self, agent, policyClass, stateSize, batchSize, nActions=None, structure=[1], max=None):
         self.agent = agent
         self.batch_size = batchSize
         self.stateSize = stateSize
 
         self.policyClass = policyClass
+
+        self.max = max
 
         if nActions:
             structure = [nActions] + structure
@@ -479,6 +481,10 @@ class hieararchy():
         return self.hierarchy[layer].getNNState(rs)
 
     def task_abstraction(self, rs=0):
+
+        if self.max and len(self.max)<=len(self.hierarchy):
+            mes.currentMessage("Reached maximum size for bottom-up abstraction")
+            return
 
         mes.warningMessage("Getting network's parameters")
 
@@ -537,7 +543,11 @@ class hieararchy():
         mes.currentMessage("Abstracting action")
         mes.currentMessage("Policy (" + str(layer) + "," + str(policy) + ") not specialized, splitting in subtasks")
 
-        if layer == len(self.hierarchy) - 1: #ACTUALLY IMPOSSIBLE
+        if self.max and (len(self.max)<=layer or self.max[layer]<=len(self.hierarchy[layer].Q)) :
+            mes.currentMessage("Reached maximum size for layer %i" % layer)
+            return
+
+        if layer == len(self.hierarchy) - 1:
             return
 
         self.hierarchy[layer + 1].copyAction(policy)
