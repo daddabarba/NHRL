@@ -142,7 +142,7 @@ class neuralQL(qLA):
         ((self.Q)[rs]).train_neural_network(state, target)
 
     def stateValues(self, state, rs):
-        return (((self.Q)[rs]).getLastPrediction(state) )
+        return ((self.Q)[rs]).getLastPrediction(state)
 
     def _setQ(self, rs, stateSize, nActions):
         self.Q = []
@@ -238,10 +238,10 @@ class temporalDifference(neuralQL):
     def __init__(self, agent, rs, stateSize, nActions, _lambda, session=None):
         super(temporalDifference, self).__init__(agent, rs, stateSize, nActions, session)
 
-        gamma = agent.livePar.discountFactor
+        self.gamma = agent.livePar.discountFactor
 
         self._lambda = _lambda
-        self.observations = [self.tdObservation(gamma, _lambda) for i in range(len(self.Q))]
+        self.observations = [self.tdObservation(self.gamma, _lambda) for i in range(len(self.Q))]
 
     def learn(self, newState, r):
 
@@ -264,6 +264,11 @@ class temporalDifference(neuralQL):
 
     def updateValue(self, observations, _gamma, prediction):
         return observations + (_gamma**(self._lambda+1)) * prediction
+
+    def copyPolicy(self, ind):
+        super(temporalDifference, self).copyPolicy(ind)
+
+        self.observations.append(self.tdObservation(self.gamma, self._lambda))
 
 
 #############
@@ -544,7 +549,8 @@ class hieararchy():
         self.policy_data[layer].append(self.policy_data[layer][policy].copy())
 
         if layer == len(self.hierarchy)-2:
-            self.bottleneck_data['mu'] = stats.reshape_mean(self.bottleneck_data['mu'])
+            #self.bottleneck_data['mu'] = stats.reshape_mean(self.bottleneck_data['mu'])
+            self.make_bottleneck_data(len(self.hierarchy[-2].Q))
 
     def updateData(self, newState, policy, layer):
         self.policy_data[layer][policy] = stats.update_stats(self.policy_data[layer][policy], newState)
