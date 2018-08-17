@@ -549,8 +549,8 @@ class hieararchy():
         self.policy_data[layer].append(self.policy_data[layer][policy].copy())
 
         if layer == len(self.hierarchy)-2:
-            #self.bottleneck_data['mu'] = stats.reshape_mean(self.bottleneck_data['mu'])
-            self.make_bottleneck_data(len(self.hierarchy[-2].Q))
+            self.bottleneck_data['mu'] = stats.reshape_mean(self.bottleneck_data['mu'])
+            #self.make_bottleneck_data(len(self.hierarchy[-2].Q))
 
     def updateData(self, newState, policy, layer):
         self.policy_data[layer][policy] = stats.update_stats(self.policy_data[layer][policy], newState)
