@@ -1,4 +1,5 @@
 import sys
+import json
 
 sys.path.append('../')
 
@@ -15,20 +16,25 @@ _defSA = 10
 _defSB = -4.5
 _defSThresh = 285.0
 
-_defHeight = 15.0
-_defLowerBound = 5.0
-_defStartPoint = 10
-_defSpeed = 0.03
+_defHeight = 500
+_defLowerBound = 0.01
+_defStartPoint = 2
+_defSpeed = 0.02
 
 _defIA = 100.0
 _defIB = 5.0
 _defIC = 1.0
 _defILowBound = 0.0
 
-_defLearningRate = 0.0
+_defLearningRate = 0.38
 _defDiscountFactor = 0.98
 
 _defNeuralLearningRate = -1
+
+_defBatchSize = 30
+
+_defSDMax = 1.5
+_defBNBound = 5.0
 
 _defStartQMin = 2 * par.baseReward * (-1 if par.baseReward > 0 else 1)
 _defStartQMax = _defStartQMin * (-1)
@@ -39,60 +45,79 @@ def defInput(mes, defVal):
 
 
 class agentPar:
-    def __init__(self):
-        mes.currentMessage("Setting base reward value to " + str(_defBaseReward))
-        self.baseReward = _defBaseReward
+    def __init__(self, source=None):
+        self.source = source
 
-        mes.currentMessage("Setting goal reward value to " + str(_defGoalReward))
-        self.goalReward = _defGoalReward
+        if self.source:
+            if type(self.source) == type({}):
+                self.__dict__.update(source)
+            else:
+                self.__dict__.update(json.load(open(source,'r')))
 
-        mes.currentMessage("Setting parameter A of scheduling function to " + str(_defSA))
-        self.scheduleA = _defSA
+            self.source = source
+        else:
+            mes.currentMessage("Setting base reward value to " + str(_defBaseReward))
+            self.baseReward = _defBaseReward
 
-        mes.currentMessage("Setting parameter B of scheduling function to " + str(_defSB))
-        self.scheduleB = _defSB
+            mes.currentMessage("Setting goal reward value to " + str(_defGoalReward))
+            self.goalReward = _defGoalReward
 
-        mes.currentMessage("Setting threshold of scheduling function to " + str(_defSThresh))
-        self.scheduleThresh = _defSThresh
+            mes.currentMessage("Setting parameter A of scheduling function to " + str(_defSA))
+            self.scheduleA = _defSA
 
-        mes.currentMessage("Setting parameter A of interest update rule to " + str(_defIA))
-        self.interestA = _defIA
+            mes.currentMessage("Setting parameter B of scheduling function to " + str(_defSB))
+            self.scheduleB = _defSB
 
-        mes.currentMessage("Setting parameter B of interest update rule to " + str(_defIB))
-        self.interestB = _defIB
+            mes.currentMessage("Setting threshold of scheduling function to " + str(_defSThresh))
+            self.scheduleThresh = _defSThresh
 
-        mes.currentMessage("Setting parameter C of interest update rule to " + str(_defIC))
-        self.interestC = _defIC
+            mes.currentMessage("Setting parameter A of interest update rule to " + str(_defIA))
+            self.interestA = _defIA
 
-        mes.currentMessage("Setting lower bound parameter of interest update rule to " + str(_defILowBound))
-        self.iLowBound = _defILowBound
+            mes.currentMessage("Setting parameter B of interest update rule to " + str(_defIB))
+            self.interestB = _defIB
 
-        mes.currentMessage("Setting learning rate to: " + str(_defLearningRate))
-        self.learningRate = _defLearningRate
+            mes.currentMessage("Setting parameter C of interest update rule to " + str(_defIC))
+            self.interestC = _defIC
 
-        mes.currentMessage("Setting discount factor to: " + str(_defDiscountFactor))
-        self.discountFactor = _defDiscountFactor
+            mes.currentMessage("Setting lower bound parameter of interest update rule to " + str(_defILowBound))
+            self.iLowBound = _defILowBound
 
-        mes.currentMessage("Setting discount factor to: " + str(_defNeuralLearningRate))
-        self.neuralLearningRate = _defNeuralLearningRate
+            mes.currentMessage("Setting learning rate to: " + str(_defLearningRate))
+            self.learningRate = _defLearningRate
 
-        mes.currentMessage("Setting maximum starting Q value to " + str(_defStartQMax))
-        self.startQMax = _defStartQMax
+            mes.currentMessage("Setting discount factor to: " + str(_defDiscountFactor))
+            self.discountFactor = _defDiscountFactor
 
-        mes.currentMessage("Setting minimum starting Q value to " + str(_defStartQMin))
-        self.startQMin = _defStartQMin
+            mes.currentMessage("Setting discount factor to: " + str(_defNeuralLearningRate))
+            self.neuralLearningRate = _defNeuralLearningRate
 
-        mes.currentMessage("Setting softmax exp. schedule f. height " + str(_defHeight))
-        self.height = _defHeight
+            mes.currentMessage("Setting maximum starting Q value to " + str(_defStartQMax))
+            self.startQMax = _defStartQMax
 
-        mes.currentMessage("Setting softmax exp. schedule f. low bound " + str(_defLowerBound))
-        self.lowBound = _defLowerBound
+            mes.currentMessage("Setting minimum starting Q value to " + str(_defStartQMin))
+            self.startQMin = _defStartQMin
 
-        mes.currentMessage("Setting softmax exp. schedule f. speed " + str(_defSpeed))
-        self.speed = _defSpeed
+            mes.currentMessage("Setting softmax exp. schedule f. height " + str(_defHeight))
+            self.height = _defHeight
 
-        mes.currentMessage("Setting softmax exp. schedule f. start point " + str(_defStartPoint))
-        self.startPoint = _defStartPoint
+            mes.currentMessage("Setting softmax exp. schedule f. low bound " + str(_defLowerBound))
+            self.lowBound = _defLowerBound
+
+            mes.currentMessage("Setting softmax exp. schedule f. speed " + str(_defSpeed))
+            self.speed = _defSpeed
+
+            mes.currentMessage("Setting softmax exp. schedule f. start point " + str(_defStartPoint))
+            self.startPoint = _defStartPoint
+
+            mes.currentMessage("Setting batch size " + str(_defBatchSize))
+            self.batchSize = _defBatchSize
+
+            mes.currentMessage("Setting max SD " + str(_defSDMax))
+            self.SDMax = _defSDMax
+
+            mes.currentMessage("Setting bottleneck normalize limit: " + str(_defBNBound))
+            self.BNBound = _defBNBound
 
     def printPars(self):
 
@@ -121,37 +146,58 @@ class agentPar:
         print("\tLow bound value of interest update rule: " + str(self.iLowBound))
 
         print("\nSoftmax exploration values:")
-        print("\tsoftmax exp. schedule f. height" + str(self.height))
-        print("\tsoftmax exp. schedule f. low bound" + str(self.lowBound))
-        print("\tsoftmax exp. schedule f. speed" + str(self.speed))
-        print("\tsoftmax exp. schedule f. starting point" + str(self.startPoint))
+        print("\tsoftmax exp. schedule f. height: " + str(self.height))
+        print("\tsoftmax exp. schedule f. low bound: " + str(self.lowBound))
+        print("\tsoftmax exp. schedule f. speed: " + str(self.speed))
+        print("\tsoftmax exp. schedule f. starting point: " + str(self.startPoint))
+
+        print("\nBatch reinforcement learning:")
+        print("\tbatch size: " + str(self.batchSize) )
+
+        print("\nHRL:")
+        print("\tMax SD: " + str(self.SDMax))
+        print("\tBottleneck limit: " + str(self.BNBound))
 
         print("\n")
 
     def resetPars(self):
-        self.baseReward = _defBaseReward
-        self.goalReward = _defGoalReward
+        if self.source:
+            source = self.source
+            if type(self.source) == type({}):
+                self.__dict__.update(source)
+            else:
+                self.__dict__.update(json.load(open(source,'r')))
 
-        self.scheduleA = _defSA
-        self.scheduleB = _defSB
-        self.scheduleThresh = _defSThresh
+            self.source = source
+        else:
+            self.baseReward = _defBaseReward
+            self.goalReward = _defGoalReward
 
-        self.interestA = _defIA
-        self.interestB = _defIB
-        self.interestC = _defIC
-        self.iLowBound = _defILowBound
+            self.scheduleA = _defSA
+            self.scheduleB = _defSB
+            self.scheduleThresh = _defSThresh
 
-        self.learningRate = _defLearningRate
-        self.discountFactor = _defDiscountFactor
-        self.startQMin = _defStartQMin
-        self.startQMax = _defStartQMax
+            self.interestA = _defIA
+            self.interestB = _defIB
+            self.interestC = _defIC
+            self.iLowBound = _defILowBound
 
-        self.neuralLearningRate = _defNeuralLearningRate
+            self.learningRate = _defLearningRate
+            self.discountFactor = _defDiscountFactor
+            self.startQMin = _defStartQMin
+            self.startQMax = _defStartQMax
 
-        self.height = _defHeight
-        self.startPoint = _defStartPoint
-        self.lowBound = _defLowerBound
-        self.speed = _defSpeed
+            self.neuralLearningRate = _defNeuralLearningRate
+
+            self.height = _defHeight
+            self.startPoint = _defStartPoint
+            self.lowBound = _defLowerBound
+            self.speed = _defSpeed
+
+            self.batchSize = _defBatchSize
+
+            self.SDMax = _defSDMax
+            self.BNBound = _defBNBound
 
     def changePars(self):
         self.baseReward = defInput("Insert base reward value: ", self.baseReward)
@@ -173,11 +219,22 @@ class agentPar:
 
         self.neuralLearningRate = defInput("Insert learning rate value: ", self.neuralLearningRate)
 
-        self.height = defInput("Insert softmax exp. schedule f. height", self.height)
-        self.speed = defInput("Insert softmax exp. schedule f. height", self.speed)
-        self.lowBound = defInput("Insert softmax exp. schedule f. height", self.lowBound)
-        self.startPoint = defInput("Insert softmax exp. schedule f. height", self.startPoint)
+        self.height = defInput("Insert softmax exp. schedule f. height: ", self.height)
+        self.speed = defInput("Insert softmax exp. schedule f. height: ", self.speed)
+        self.lowBound = defInput("Insert softmax exp. schedule f. height: ", self.lowBound)
+        self.startPoint = defInput("Insert softmax exp. schedule f. height: ", self.startPoint)
+
+        self.batchSize = defInput("Insert batch size: ", self.batchSize)
+
+        self.SDMax = defInput("Max SD: ", self.SDMax)
+        self.BNBound = defInput("Bottleneck normalized limit: ", self.BNBound)
+
+    def export(self, loc):
+        save = self.__dict__["source"]
+        del self.__dict__["source"]
+        json.dump(self.__dict__, open(loc, 'w'))
+        self.__dict__["source"] = save
 
     def __del__(self):
-        self.speed = self.height = self.lowBound = self.startPoint = self.neuralLearningRate = self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
+        self.BNBound = self.SDMax = self.batchSize = self.speed = self.height = self.lowBound = self.startPoint = self.neuralLearningRate = self.baseReward = self.goalReward = self.scheduleA = self.scheduleB = self.scheduleThresh = self.interestA = self.interestB = self.interestC = self.iLowBound = self.learningRate = self.discountFactor = self.startQMax = self.startQMin = 0
         print (self.__class__.__name__, "has been deleted")

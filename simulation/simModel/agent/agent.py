@@ -23,7 +23,9 @@ def attachSensors():
     return meta.getFunctionsDefinitions(sensors)
 
 class agent:
-    def __init__(self, startingState="c", environment="../../files/maze.txt", graphic=1):
+    def __init__(self, startingState="c", environment="../../files/maze.txt", pars=None, graphic=True, suppressPrint = False):
+
+        mes.suppress = suppressPrint
 
         mes.currentMessage("sensors")
         (self.sensors, self.sensorsNames) = attachSensors()
@@ -32,7 +34,7 @@ class agent:
         self.environment = env.environment(environment, self, startingState, graphic)
 
         mes.settingMessage("live parameters")
-        self.livePar = par.agentPar()
+        self.livePar = par.agentPar(source=pars)
         mes.setMessage("live parameters")
 
 
@@ -48,7 +50,8 @@ class agent:
         self.rsSize = 1 if not isinstance(currentGState,list) else len(currentGState)                             #PARAMETRIZE
 
         mes.settingMessage("Action-state values table")
-        self.qAgent = qLA.neuralBoltzmann(self,self.rsSize, len(self.currentState), self.environment.world.numActions)
+        self.qAgent = qLA.hTDBoltzmann(self, len(self.currentState), self.livePar.batchSize, nActions=self.environment.world.numActions, structure=[self.rsSize])
+        #self.qAgent = qLA.tdBoltzmann(self, self.rsSize, len(self.currentState), self.environment.world.numActions, self.livePar.batchSize)
         mes.setMessage("Action-state values table")
 
         self.graphic = graphic
@@ -61,33 +64,28 @@ class agent:
         mes.currentMessage("selecting action according to current beleived state")
         action = self.qAgent.policy(self.currentState, rs)
 
+        self.actionHistory.append(action)
+
         mes.currentMessage("performing action: " + str(action))
         (self.environment).performAction(action)  # here actual state is updated
         self.updatePerceivedTime()
 
         mes.currentMessage("perceiving")
         newState = self.perceive(self.problemStateDefinition)  # PARAMETRIZE
-        print("current problem state: " + str(newState))
+
+        mes.message("current problem state: " + str(newState))
         newGState = self.perceive(self.goalStateDefinition)
         reward = self.R(newGState)
+        self.rewardHistory.append(reward)
+
         (self.sensoryHistory).append(newState+newGState)
         mes.currentMessage("Reward:" + str(reward))
 
 
-        mes.currentMessage("observing transition")
-        transition = ((self.currentState, action, newState), reward)
-        (self.transitionHistory).append(transition)
         mes.currentMessage("learning from previous transition: ")
-        self.qAgent.learn(transition)
+        self.qAgent.learn(newState, reward)
 
-        (self.stateHistory).append(self.currentState)
-
-        mes.settingMessage("current beleived state from (" + str(self.currentState) + ")")
         self.currentState = newState
-        mes.setMessage("current believed state to (" + str(self.currentState) + ")")
-
-        #if (self.graphic):
-            #(self.environment).changeBelief()
 
     def R(self, goalDetection):
         rs = []
@@ -122,16 +120,6 @@ class agent:
     def mapInternalState(self, sensors):
         return self.environment.world._hashFun(sensors)
 
-    '''
-    def splitInternalState(self, state, definition):
-        partition = []
-
-        for part in definition:
-            partition.append( 1 if state[(self.sensorsNames).index(part)] else 0)
-
-        return partition[0] if len(partition)==1 else  partition
-    '''
-
     def updatePerceivedTime(self):
         self.time += 1
 
@@ -143,10 +131,13 @@ class agent:
         self.stateHistory = []
 
         mes.currentMessage("initializing transition history")
-        self.transitionHistory = []
+        self.actionHistory = []
 
         mes.currentMessage("initializing perceived time")
         self.time = 0
+
+        mes.currentMessage("initializing reward history")
+        self.rewardHistory = []
 
     def reset(self):
         self.currentState = (self.stateHistory)[0]
@@ -154,6 +145,9 @@ class agent:
         self.qAgent.reset()
 
         self._setHistory()
+
+    def exportPars(self, location):
+        self.livePar.export(location)
 
     def __del__(self):
         self.currentState = self.sensoryHistory = self.transitionHistory = self.time = 0

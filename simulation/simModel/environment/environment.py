@@ -25,7 +25,6 @@ import parameters as par
 
 import metaFunctions as meta
 
-import graphic
 import messages as mes
 
 
@@ -104,13 +103,15 @@ class environment:
         self.graph = graph
 
     def _initGraph(self, sensorsNames):
+        if self.graph:
+            import graphic
 
-        ss = (self.world)._invHashFun((self.world).currentState)
-        sbs = (self.world)._invHashFun((self.agent.environment).interrogateEnvironment("ID"))
+            ss = (self.world)._invHashFun((self.world).currentState)
+            sbs = (self.world)._invHashFun((self.agent.environment).interrogateEnvironment("ID"))
 
-        mes.settingMessage("graphic render")
-        self.graphic = graphic.dispWorld(self.size, _getFeatures(self.maps, self.size), ss, sbs, self.maps, sensorsNames)
-        mes.setMessage("graphic render")
+            mes.settingMessage("graphic render")
+            self.graphic = graphic.dispWorld(self.size, _getFeatures(self.maps, self.size), ss, sbs, self.maps, sensorsNames)
+            mes.setMessage("graphic render")
 
     def pullUpAgent(self):
         (self.world)._resetModel()
