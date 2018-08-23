@@ -555,6 +555,7 @@ class hieararchy():
 
         self.policy_data[layer][policy]['sd'] *= 1.0/4.0
         self.policy_data[layer][policy]['mu'] *= 1.0/2.0
+        self.policy_data[layer][policy]['N'] *= 1.0/2.0
 
         self.policy_data[layer].append(self.policy_data[layer][policy].copy())
 
