@@ -53,7 +53,7 @@ def runPars(pars,i):
     elif (sys.argv)[i] == "origin":
         pars.origin = (sys.argv)[i + 1]
 
-_defIter = 60
+_defIter = 1000
 _testDirPath = 'tests/'
 
 
