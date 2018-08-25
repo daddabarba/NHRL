@@ -18,6 +18,7 @@ import metaFunctions as meta
 
 import messages as mes
 
+import pickle
 
 def attachSensors():
     return meta.getFunctionsDefinitions(sensors)
@@ -148,6 +149,14 @@ class agent:
 
     def exportPars(self, location):
         self.livePar.export(location)
+
+    def save(self, loc):
+        with open(loc, 'wb') as fid:
+            pickle.dump(self, fid)
+
+    def load(self, loc):
+        with open(loc, 'rb') as fid:
+            return pickle.load(fid)
 
     def __del__(self):
         self.currentState = self.sensoryHistory = self.transitionHistory = self.time = 0
