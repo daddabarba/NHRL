@@ -320,6 +320,14 @@ class boltzmann(simAnneal):
         values = np.power(np.e,self.stateValues(state,rs)/self._val(self.agent.time))
         return values/(values.sum())
 
+    def getPMat(self, state):
+        M = []
+
+        for rs in range(len(self.Q)):
+            M.append(self.getPDist(state, rs))
+
+        return np.array(M)
+
     def stateValue(self, state, rs):
         return (self.getPDist(state, rs)*self.stateValues(state,rs)).sum();
 
