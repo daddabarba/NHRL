@@ -200,6 +200,10 @@ class temporalDifference(neuralQL):
             self.start = 0
 
         def update(self, val, action, state):
+
+            if not state or not action:
+                return 
+
             self.R.append(val)
             self.P.append((state, action))
 
