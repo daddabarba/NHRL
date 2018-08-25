@@ -659,7 +659,7 @@ class weightedHierarchy(hieararchy):
             if layer.last_policy or layer.last_policy == 0:
                 mes.currentMessage("Reward sent")
 
-                reward = r*mixture[layer]
+                reward = (r*mixture[self.hierarchy.index(layer)])[0]
                 layer.learn(newState, reward)
 
 ######################
