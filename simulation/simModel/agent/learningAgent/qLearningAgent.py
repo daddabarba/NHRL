@@ -644,6 +644,24 @@ class weightedHierarchy(hieararchy):
 
         return mixture[::-1]
 
+    def learn(self, newState, r):
+        mes.currentMessage("Broadcasting reward to previous policy firing chain")
+
+        if type(r) == list:
+            r = r[0]
+
+        mixture = self.getMixture(newState)
+
+        for layer in self.hierarchy:
+
+            mes.currentMessage("Current layer: %d" % self.hierarchy.index(layer))
+
+            if layer.last_policy or layer.last_policy == 0:
+                mes.currentMessage("Reward sent")
+
+                reward = r*mixture[layer]
+                layer.learn(newState, reward)
+
 ######################
 #CONCRETE HIERARCHIES#
 ######################
@@ -655,3 +673,7 @@ class hBatchBoltzmann(hieararchy):
 class hTDBoltzmann(hieararchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
         super(hTDBoltzmann, self).__init__(agent, tdBoltzmann, stateSize, batchSize, nActions, structure)
+
+class hTDWeightBoltzmann(weightedHierarchy):
+    def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
+        super(hTDWeightBoltzmann, self).__init__(agent, tdBoltzmann, stateSize, batchSize, nActions, structure)
