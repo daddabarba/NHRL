@@ -442,6 +442,10 @@ class tdBoltzmann(boltzmann, temporalDifference):
 #HIERARCHICAL REINFORCEMENT LEARNING#
 #####################################
 
+######################
+#ABSTRACT HIERARCHIES#
+######################
+
 class hieararchy():
 
     def __init__(self, agent, policyClass, stateSize, batchSize, nActions=None, structure=[1], max=None):
@@ -628,6 +632,21 @@ class hieararchy():
             print(str(len(layer.Q)) + " , ", end="")
         print(" ")
 
+
+class weightedHierarchy(hieararchy):
+
+    def getMixture(self, state):
+        mixture = [np.array([[1.0]])]
+
+        for layer in list(range(1, len(self.hierarchy)))[::-1]:
+            M = self.hierarchy[layer].getPMat(state)
+            mixture.append(np.dot(mixture[-1], M))
+
+        return mixture[::-1]
+
+######################
+#CONCRETE HIERARCHIES#
+######################
 
 class hBatchBoltzmann(hieararchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
