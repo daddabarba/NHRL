@@ -329,7 +329,7 @@ class boltzmann(simAnneal):
         return np.array(M)
 
     def stateValue(self, state, rs):
-        return (self.getPDist(state, rs)*self.stateValues(state,rs)).sum();
+        return (self.getPDist(state, rs)*self.stateValues(state,rs)).sum()
 
     def policy(self, state, rs, learning=False):
         probabilities = self.getPDist(state,rs)
@@ -628,9 +628,10 @@ class hieararchy():
 
 
     def printHierarchy(self):
+        str = ""
         for layer in self.hierarchy:
-            print(str(len(layer.Q)) + " , ", end="")
-        print(" ")
+            str = str + str(len(layer.Q)) + " , "
+        print(str)
 
 
 class weightedHierarchy(hieararchy):
