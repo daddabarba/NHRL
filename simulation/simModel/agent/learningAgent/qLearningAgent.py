@@ -201,7 +201,7 @@ class temporalDifference(neuralQL):
 
         def update(self, val, action, state):
             
-            if not state or not action:
+            if not state or (not action and action!=0):
                 return 
             
             self.R.append(val)
@@ -234,7 +234,7 @@ class temporalDifference(neuralQL):
             return self.P[self.start][1]
 
         def isFull(self):
-            return len(self.R)==(self._lambda+1)
+            return len(self.R)>=(self._lambda+1)
 
         def isExceeding(self):
             return len(self.R)>(self._lambda+1)
