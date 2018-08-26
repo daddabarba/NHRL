@@ -10,7 +10,7 @@ import parameters as par
 import messages as mes
 
 _defBaseReward = -0.4
-_defGoalReward = 100.0
+_defGoalReward = 10.0
 
 _defSA = 10
 _defSB = -4.5
@@ -26,12 +26,12 @@ _defIB = 5.0
 _defIC = 1.0
 _defILowBound = 0.0
 
-_defLearningRate = 0.38
+_defLearningRate = 0.35
 _defDiscountFactor = 0.98
 
 _defNeuralLearningRate = -1
 
-_defBatchSize = 30
+_defBatchSize = 80
 
 _defSDMax = 1.5
 _defBNBound = 5.0
