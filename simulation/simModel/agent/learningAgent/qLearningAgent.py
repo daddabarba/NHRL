@@ -199,6 +199,9 @@ class temporalDifference(neuralQL):
 
             self.start = 0
 
+            self.factor = self.gamma**self._lambda
+            self.remove = (1/self.gamma)
+
         def update(self, val, action, state):
             
             if not state or (not action and action!=0):
@@ -212,8 +215,8 @@ class temporalDifference(neuralQL):
 
                 self.start += 1
 
-                self.tot *= (1/self.gamma)
-                self.tot += val*(self.gamma**self._lambda)
+                self.tot *= self.remove
+                self.tot += val*self.factor
 
                 if len(self.R)>(10*self._lambda):
                     self.R = self.R[::-1][0:self._lambda][::-1]
