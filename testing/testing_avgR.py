@@ -104,7 +104,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
         a.act(0)
 
         time += 1
-        r = a.rewardHistory[-1][0]
+        r = a.rewardHistory[0]
         pR[k] = r
         accumulatedReward += pR[k]
         pM[k] = float(accumulatedReward)/time
