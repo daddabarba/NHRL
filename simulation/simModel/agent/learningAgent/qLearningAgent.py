@@ -449,7 +449,7 @@ class tdBoltzmann(boltzmann, temporalDifference):
 #ABSTRACT HIERARCHIES#
 ######################
 
-class hieararchy():
+class hierarchy():
 
     def __init__(self, agent, policyClass, stateSize, batchSize, nActions=None, structure=[1], max=None):
         self.agent = agent
@@ -631,13 +631,13 @@ class hieararchy():
 
 
     def printHierarchy(self):
-        str = ""
+        desc = ""
         for layer in self.hierarchy:
-            str = str + str(len(layer.Q)) + " , "
-        print(str)
+            desc = desc + str(len(layer.Q)) + " , "
+        return desc
 
 
-class weightedHierarchy(hieararchy):
+class weightedHierarchy(hierarchy):
 
     def getMixture(self, state):
         mixture = [np.array([[1.0]])]
@@ -670,11 +670,11 @@ class weightedHierarchy(hieararchy):
 #CONCRETE HIERARCHIES#
 ######################
 
-class hBatchBoltzmann(hieararchy):
+class hBatchBoltzmann(hierarchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
         super(hBatchBoltzmann, self).__init__(agent, batchBoltzmann, stateSize, batchSize, nActions, structure)
 
-class hTDBoltzmann(hieararchy):
+class hTDBoltzmann(hierarchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
         super(hTDBoltzmann, self).__init__(agent, tdBoltzmann, stateSize, batchSize, nActions, structure)
 
