@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 import agent
 
+import qLearningAgent as qLA
 
 graphic = False
 printSupp = True
@@ -143,6 +144,11 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     a.exportPars(path+'pars.JSON')
     json.dump({"rewards": pR, "avg": pM}, open(path+'results.JSON', 'w'))
+
+    if issubclass(type(a.qAgent), qLA.hierarchy):
+        fileTopology = open(path + 'hierarchyTopology.txt', 'w')
+        fileTopology.write(a.qAgent.printHierarchy())
+        fileTopology.close()
 
     fileR.close()
     fileM.close()
