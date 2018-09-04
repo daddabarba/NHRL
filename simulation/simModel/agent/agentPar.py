@@ -33,8 +33,8 @@ _defNeuralLearningRate = -1
 
 _defBatchSize = 80
 
-_defSDMax = 1.5
-_defBNBound = 5.0
+_defSDMax = 0.9
+_defBNBound = 3.0
 
 _defStartQMin = 2 * par.baseReward * (-1 if par.baseReward > 0 else 1)
 _defStartQMax = _defStartQMin * (-1)
