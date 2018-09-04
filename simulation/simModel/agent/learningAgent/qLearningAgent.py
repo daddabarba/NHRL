@@ -199,7 +199,14 @@ class temporalDifference(neuralQL):
 
             self.start = 0
 
+            self.factor = self.gamma**self._lambda
+            self.remove = (1/self.gamma)
+
         def update(self, val, action, state):
+            
+            if not state or (not action and action!=0):
+                return 
+            
             self.R.append(val)
             self.P.append((state, action))
 
@@ -208,8 +215,8 @@ class temporalDifference(neuralQL):
 
                 self.start += 1
 
-                self.tot *= (1/self.gamma)
-                self.tot += val*(self.gamma**self._lambda)
+                self.tot *= self.remove
+                self.tot += val*self.factor
 
                 if len(self.R)>(10*self._lambda):
                     self.R = self.R[::-1][0:self._lambda][::-1]
@@ -230,7 +237,7 @@ class temporalDifference(neuralQL):
             return self.P[self.start][1]
 
         def isFull(self):
-            return len(self.R)==(self._lambda+1)
+            return len(self.R)>=(self._lambda+1)
 
         def isExceeding(self):
             return len(self.R)>(self._lambda+1)
@@ -316,8 +323,16 @@ class boltzmann(simAnneal):
         values = np.power(np.e,self.stateValues(state,rs)/self._val(self.agent.time))
         return values/(values.sum())
 
+    def getPMat(self, state):
+        M = []
+
+        for rs in range(len(self.Q)):
+            M.append(self.getPDist(state, rs))
+
+        return np.array(M)
+
     def stateValue(self, state, rs):
-        return (self.getPDist(state, rs)*self.stateValues(state,rs)).sum();
+        return (self.getPDist(state, rs)*self.stateValues(state,rs)).sum()
 
     def policy(self, state, rs, learning=False):
         probabilities = self.getPDist(state,rs)
@@ -430,7 +445,11 @@ class tdBoltzmann(boltzmann, temporalDifference):
 #HIERARCHICAL REINFORCEMENT LEARNING#
 #####################################
 
-class hieararchy():
+######################
+#ABSTRACT HIERARCHIES#
+######################
+
+class hierarchy():
 
     def __init__(self, agent, policyClass, stateSize, batchSize, nActions=None, structure=[1], max=None):
         self.agent = agent
@@ -555,6 +574,7 @@ class hieararchy():
 
         self.policy_data[layer][policy]['sd'] *= 1.0/4.0
         self.policy_data[layer][policy]['mu'] *= 1.0/2.0
+        self.policy_data[layer][policy]['N'] *= 1.0/2.0
 
         self.policy_data[layer].append(self.policy_data[layer][policy].copy())
 
@@ -611,15 +631,53 @@ class hieararchy():
 
 
     def printHierarchy(self):
+        desc = ""
         for layer in self.hierarchy:
-            print(str(len(layer.Q)) + " , ", end="")
-        print(" ")
+            desc = desc + str(len(layer.Q)) + " , "
+        return desc
 
 
-class hBatchBoltzmann(hieararchy):
+class weightedHierarchy(hierarchy):
+
+    def getMixture(self, state):
+        mixture = [np.array([[1.0]])]
+
+        for layer in list(range(1, len(self.hierarchy)))[::-1]:
+            M = self.hierarchy[layer].getPMat(state)
+            mixture.append(np.dot(mixture[-1], M))
+
+        return mixture[::-1]
+
+    def learn(self, newState, r):
+        mes.currentMessage("Broadcasting reward to previous policy firing chain")
+
+        if type(r) == list:
+            r = r[0]
+
+        mixture = self.getMixture(newState)
+
+        for layer in self.hierarchy:
+
+            mes.currentMessage("Current layer: %d" % self.hierarchy.index(layer))
+
+            if layer.last_policy or layer.last_policy == 0:
+                mes.currentMessage("Reward sent")
+
+                reward = (r*mixture[self.hierarchy.index(layer)])[0]
+                layer.learn(newState, reward)
+
+######################
+#CONCRETE HIERARCHIES#
+######################
+
+class hBatchBoltzmann(hierarchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
         super(hBatchBoltzmann, self).__init__(agent, batchBoltzmann, stateSize, batchSize, nActions, structure)
 
-class hTDBoltzmann(hieararchy):
+class hTDBoltzmann(hierarchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
         super(hTDBoltzmann, self).__init__(agent, tdBoltzmann, stateSize, batchSize, nActions, structure)
+
+class hTDWeightBoltzmann(weightedHierarchy):
+    def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
+        super(hTDWeightBoltzmann, self).__init__(agent, tdBoltzmann, stateSize, batchSize, nActions, structure)

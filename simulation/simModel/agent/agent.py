@@ -18,6 +18,7 @@ import metaFunctions as meta
 
 import messages as mes
 
+import pickle
 
 def attachSensors():
     return meta.getFunctionsDefinitions(sensors)
@@ -37,12 +38,10 @@ class agent:
         self.livePar = par.agentPar(source=pars)
         mes.setMessage("live parameters")
 
+        self._setHistory()
 
         self.problemStateDefinition = ["leftWall", "rightWall", "topWall", "bottomWall", "previousAction"]
         self.goalStateDefinition = ["exitDetector"]
-
-        self._setHistory()
-
 
         mes.currentMessage("initializing starting internal state")
         self.currentState = self.perceive(self.problemStateDefinition)        #PARAMETRIZE
@@ -50,8 +49,9 @@ class agent:
         self.rsSize = 1 if not isinstance(currentGState,list) else len(currentGState)                             #PARAMETRIZE
 
         mes.settingMessage("Action-state values table")
-        self.qAgent = qLA.hTDBoltzmann(self, len(self.currentState), self.livePar.batchSize, nActions=self.environment.world.numActions, structure=[self.rsSize])
-        #self.qAgent = qLA.tdBoltzmann(self, self.rsSize, len(self.currentState), self.environment.world.numActions, self.livePar.batchSize)
+        #self.qAgent = qLA.hTDWeightBoltzmann(self, len(self.currentState), self.livePar.batchSize, nActions=self.environment.world.numActions, structure=[self.rsSize])
+        #self.qAgent = qLA.hTDBoltzmann(self, len(self.currentState), self.livePar.batchSize, nActions=self.environment.world.numActions, structure=[self.rsSize])
+        self.qAgent = qLA.tdBoltzmann(self, self.rsSize, len(self.currentState), self.environment.world.numActions, self.livePar.batchSize)
         mes.setMessage("Action-state values table")
 
         self.graphic = graphic
@@ -64,7 +64,7 @@ class agent:
         mes.currentMessage("selecting action according to current beleived state")
         action = self.qAgent.policy(self.currentState, rs)
 
-        self.actionHistory.append(action)
+        self.actHistory = action
 
         mes.currentMessage("performing action: " + str(action))
         (self.environment).performAction(action)  # here actual state is updated
@@ -76,11 +76,9 @@ class agent:
         mes.message("current problem state: " + str(newState))
         newGState = self.perceive(self.goalStateDefinition)
         reward = self.R(newGState)
-        self.rewardHistory.append(reward)
+        self.rewardHistory = reward
 
-        (self.sensoryHistory).append(newState+newGState)
         mes.currentMessage("Reward:" + str(reward))
-
 
         mes.currentMessage("learning from previous transition: ")
         self.qAgent.learn(newState, reward)
@@ -124,32 +122,26 @@ class agent:
         self.time += 1
 
     def _setHistory(self):
-        mes.currentMessage("initializing perception history")
-        self.sensoryHistory = []
-
-        mes.currentMessage("initializing states history")
-        self.stateHistory = []
-
-        mes.currentMessage("initializing transition history")
-        self.actionHistory = []
-
         mes.currentMessage("initializing perceived time")
         self.time = 0
 
         mes.currentMessage("initializing reward history")
-        self.rewardHistory = []
+        self.rewardHistory = None
 
-    def reset(self):
-        self.currentState = (self.stateHistory)[0]
-        self.environment._reset()
-        self.qAgent.reset()
-
-        self._setHistory()
+        mes.currentMessage("initializing action history")
+        self.actionHistory = None
 
     def exportPars(self, location):
         self.livePar.export(location)
 
+    def save(self, loc):
+        with open(loc, 'wb') as fid:
+            pickle.dump(self, fid)
+
+    def load(self, loc):
+        with open(loc, 'rb') as fid:
+            return pickle.load(fid)
+
     def __del__(self):
-        self.currentState = self.sensoryHistory = self.transitionHistory = self.time = 0
         del self.qAgent
         print (self.__class__.__name__, "has been deleted")

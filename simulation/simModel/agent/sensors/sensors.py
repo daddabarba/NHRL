@@ -29,8 +29,8 @@ def crossRoadDetector(fun, intro):
 
 def previousAction(fun, intro):
 
-    if intro.actionHistory!=[]:
-        action = (intro.actionHistory[-1])
+    if intro.actionHistory:
+        action = (intro.actionHistory)
 
         ret = [0,0,0,0]
         ret[action] = 1

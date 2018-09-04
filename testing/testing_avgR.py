@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 import agent
 
+import qLearningAgent as qLA
 
 graphic = False
 printSupp = True
@@ -53,7 +54,7 @@ def runPars(pars,i):
     elif (sys.argv)[i] == "origin":
         pars.origin = (sys.argv)[i + 1]
 
-_defIter = 60
+_defIter = 1000
 _testDirPath = 'tests/'
 
 
@@ -93,8 +94,8 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName), pars=pars.parsFile, graphic=graphic, suppressPrint=printSupp)
 
-    pR = []
-    pM = []
+    pR = [0.0 for k in range(pars.iterations)]
+    pM = [0.0 for k in range(pars.iterations)]
 
     accumulatedReward = 0
     time = 0
@@ -104,12 +105,12 @@ for testNIter in range(testN,testN+pars.nExperiments):
         a.act(0)
 
         time += 1
-        r = a.rewardHistory[-1][0]
-        pR.append(r)
-        accumulatedReward += pR[-1]
-        pM.append(float(accumulatedReward)/time)
+        r = a.rewardHistory[0]
+        pR[k] = r
+        accumulatedReward += pR[k]
+        pM[k] = float(accumulatedReward)/time
 
-        it_desc = " time-step: %d/%d - avg reward: %f, total: %f (last reward: %f)" % (k + 1, pars.iterations, pM[-1], accumulatedReward, r)
+        it_desc = " time-step: %d/%d - avg reward: %f, total: %f (last reward: %f)" % (k + 1, pars.iterations, pM[k], accumulatedReward, r)
         print(it_desc+"\r", end = "")
 
     print(" ")
@@ -143,6 +144,11 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     a.exportPars(path+'pars.JSON')
     json.dump({"rewards": pR, "avg": pM}, open(path+'results.JSON', 'w'))
+
+    if issubclass(type(a.qAgent), qLA.hierarchy):
+        fileTopology = open(path + 'hierarchyTopology.txt', 'w')
+        fileTopology.write(a.qAgent.printHierarchy())
+        fileTopology.close()
 
     fileR.close()
     fileM.close()

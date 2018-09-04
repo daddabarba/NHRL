@@ -149,9 +149,9 @@ class LSTM():
             self.epoch += 1
 
             self.set_train_state(self.getFullState(train_x))
-            self.set_state(self.train_cell)
+        self.set_state(self.train_cell)
 
-            return (prediction)
+        return (prediction)
 
     def predict(self, x):
         fd = {self.xPH: np.array([x])}

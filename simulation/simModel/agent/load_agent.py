@@ -6,7 +6,7 @@ class SysPars():
     def __init__(self):
         self.env = None
         self.loop = False
-        self.GUI = True
+        self.GUI = False
         self.noPrint = False
 
 pars = SysPars()
