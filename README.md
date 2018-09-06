@@ -1,6 +1,9 @@
-# Neural Hierarchical Reinforcement Learning
+# (Adaptive) Neural Hierarchical Reinforcement Learning
 
-This project present an implementation of a **Hierarchical Reinforcement Learning** (**HRL**) algoritim, where state-action value functions are learned by a **Long-Short Term Memory** (**LSTM**) **Artificial Neural Network** (**ANN**).
+This project present an implementation of a **Hierarchical Reinforcement Learning** (**HRL**) algoritim, where state-action value functions are learned by a **Long-Short Term Memory** (**LSTM**) **Artificial Neural Network** (**ANN**). <br /> The proposed architecure tries to adaptively fit (online) a hierarchy of abstract action, completely bottom-up, without the need to add any background information. This allows for a fast and simple use of HRL, with the added possibility of re-using the learned procedural knowledge.
+
+In the branch `paper_code` you can find the code in the same state as it was, when the paper (relative to this project) was written. <br />
+In `<repository>/testing/tests/` you can find the data collected and used in the paper. Finally, the script `<repository>/resultsTesting/extractData.r` contains the data manipulation procedure, used to infer on the collected results and perform statistical tests on them.
 
 ## Python
 
