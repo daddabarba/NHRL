@@ -6,86 +6,76 @@ This project present an implementation of a **Hierarchical Reinforcement Learnin
 
 This project was built on **python 3.5.2**. In order to run the following packages are needed:
 
-* numpy
-* tensorflow
-* scipy (*optional*, for testing)
-* matplotlib (*optional*, for GUI)
+* numpy **1.14.15**
+* tensorflow **1.10.0**
+* matplotlib **2.2.2** (*optional*, for GUI)
 
 
 ## Running the project
 
 ### Agent
 
-To run the agent (manually), go to *repository/simulation/simModel/agent*, then run the script *load_agent.py*, with option *-i* (to keep the script running after execution).
+To run the agent (manually), go to `<repository>/simulation/simModel/agent`, then run the script `load_agent.py`. Add the option `-i` to keep the script running after execution, otherwise it will close as soon as the agent is loaded.
 
 ```
 python3 -i load_agent.py
 ```
 
-The GUI and agent will be loaded in the script, at which point it will ask you to specify how many steps the agent should performs. After this is done the script will keep asking you this same thing.To re-submit the previous number of steps, simply press *submit*.
-
-To stop the loop submit 0. To not start the loop at all, add the parameters *loop* (the parameter) and then *False* (the setting).
+You can also add a series of parameters to specify how the agent should be loaded. Each parameter is given to the script as a couple `key value`
 
 ```
-python3 -i load_agent.py loop False
+python3 -i load_agent.py {key value}
 ```
 
-To specify a different path of the maze source file (from the default one), add the parameter *path* and then specify the relative path to the file.
+The following options are available:
 
-```
-python3 -i load_agent.py path path/to/file
-```
+* *key:* `loop`, *values:* `True`,`False`, *default:* `False` <br /> if this option is set to `True`, then the script will require you to input the number of time-steps you want the agent to act. Once this is done, the program will keep asking you again a new number of time-steps (submitting nothing will result in the previous value being used). To stop the loop input `0`. <br/> This option is most useful if you just want the agent to act and observe its behavior
+* *key:* `GUI`, *values:* `True`, `False`, *default:* `False` <br /> if this option is set to `True`, then the GUI will also be loaded. With the GUI you can observe the maze and the agent's current position and past visited locations.
+* *key:* `noPrint`, *values:* `True`, `False`, *default:* `False` <br /> if this option is set to `True`, then the agent object will print no statement (no output)
+* *key:* `path`, *values:* `path/to/file`, *default:* `None` <br /> if this option is left to value `None`, then the default environment will be loaded. If a path to a file is specified, then the latter will be used as maze (environment) for the agent. The file must be a CSV file, removing the header tags (see `<repository>/simulation/files/maze.txt` for reference)
 
-You can combine these two settings, in any order.
+These options can pe used in any order and number (eg. `python3 -i load_agent.py loop False GUI True`).
 
 ### Running the experiment
 
-To run an experiment, go to *repository/testing*, and run the python script *testing.py*.
+#### Average R per time-step
+To run an experiment, go to `<repository>/testing/`, and run the python script `testing_avgR.py`.
+
+In this experiment a number *n* of time-steps is specified. Then the agent will perform *n* actions, and the average reward at each time-step is recorded.
+
+This script will require some parameters to be specified:
+
+* *key:* `name`, *values:* `file/name` <br />  the name of the folder in which to store the experiment's results. The results will be found in `<repository>/tasting/tests/<name>`.
+* *key:* `n`, *values:* `<integer>` <br />  the **number of time-steps**, that is the number of actions the agent is left to do
+* *key:* `e`, *values:* `<integer>` <br /> the number of times the experiment has to be repeated.
+* *key:* `maze`, *values:* `path/to/file` <br />   the path to the file defining the environment (maze map). Set to `def` to leave default maze.
+* *key:* `pars`, *values:* `path/to/file` <br />  path to *json file* containing the parameters the agent should use (such as *learning rate* for instance)
+* *key:* `origin`, *values:* `path/to/file` <br /> path to *json file* containing an experiment's parameter setting (*n*, *e*, *name*, ecc...) 
+
+If any of these parameters is not given when lunching the script, they will be asked (as input) during the script's run.
+
+After giving to the experiment a name of your liking, say *experiment_1*, you will find the results in the folder `<repository>/testing/tests/experiment_1_n`.
+Here *n* is the lowest free integer such that the name *experiment_1_n* is not in the folder `<repository>/testing/tests`.
+
+
+#### Restart experiment
+To run an experiment, go to `<repository>/testing/`, and run the python script `testing_restart.py`.
 
 The experiment run is very simple. Given a maze, the agent will start from the middle, and have to reach one of the two exits.
-An *iteration* consists of the agent reaching an exit from the starting point. After an iteration is complete, the agent has a *visa*, that is a given number of time-steps, before it is pulled back to the starting point.
+An **iteration** consists of the agent reaching an exit from the starting point. After an iteration is complete, the agent has a **visa**, that is a given number of time-steps, before it is pulled back to the starting point.
 The number of time-steps required to complete an iteration is what is recorded.
 
-This script, besides some formalities such as the results' folder name and the environment to use, will require you to choose among 2 parameters:
+This script will require some parameters to be specified:
 
-* the **number of iteration**, that is the number of times the agent has to find the exit, and thus the number of times it is pulled back to the starting point
-* the **visa** size, that is, how long to wait (in time-steps) before the agent is pulled back to the starting point (after the exit is found)
+* *key:* `name`, *values:* `file/name` <br />  the name of the folder in which to store the experiment's results. The results will be found in `<repository>/tasting/tests/<name>`.
+* *key:* `v`, *values:* `<integer>` <br />  the **visa** size, that is, how long to wait (in time-steps) before the agent is pulled back to the starting point (after the exit is found).
+* *key:* `n`, *values:* `<integer>` <br />  the **number of iterations**, that is the number of times the agent has to find the exit, and thus the number of times it is pulled back to the starting point.
+* *key:* `e`, *values:* `<integer>` <br /> the number of times the experiment has to be repeated.
+* *key:* `maze`, *values:* `path/to/file` <br />   the path to the file defining the environment (maze map). Set to `def` to leave default maze.
+* *key:* `pars`, *values:* `path/to/file` <br />  path to *json file* containing the parameters the agent should use (such as *learning rate* for instance)
+* *key:* `origin`, *values:* `path/to/file` <br /> path to *json file* containing an experiment's parameter setting (*n*, *e*, *name*, ecc...) 
 
-After giving to the experiment a name of your liking, say *experiment_1*, you will find the results in the folder *repository/testing/tests/experiment_1_n*.
-Here *n* is the lowest free integer such that the name *experiment_1_n* is not in the folder *repository/testing/tests*.
+If any of these parameters is not given when lunching the script, they will be asked (as input) during the script's run.
 
-## The architecture
-
-### Policies
-
-Each **policy** in this architecture is implemented as an *LSTM ANN*. The ANN is actually internal to the policy and does not affect its training.
-Mainly for training *Q-Learning* (or a slight derivation), is used to generated a supervised, online, training sample.
-
-#### Training
-
-Training done online, not applied to all Policies the same way, nor at the same time, nor all the time.
-Moreover, **batch-reinforcement learning** has been implemented to stabilize the learning process.
-
-#### I/O mapping
-
-These LSTM ANN actually fit the **state-action value function**. Inspired by the *Deep Mind* architecture, given that the action space is always *discrete*, while states may be *continuous*, each ANN has an output neuron for each action, and a vector input for the state.
-
-The idea is that given a state, the *state-action* value for each action is given as output.
-Which output neuron stands for which action is arbitrary, but always consistent (later you will see that this way, the same architecture can be used for higher-level abstract actions).
-
-#### From state-action value ANN to policy
-
-The *policy* is **stochastic**. To map from *state-action* value to a policy, **softmax exploration** is used.
-Thus the policy is a function mapping from a state and an action, to a probability. This probability is computed by normalizing the exponentials of the action values, given the current state.
-
-## The hierarchy
-
-### Action Abstraction
-
-The goal of this architecture is to have bottom-up automatic fitting, of a hierarchical architecture of policies (or abstract actions)
-
-#### Abstract Action
-
-#### Bottom-up emergence
-
-#### Reward back-propagation
+After giving to the experiment a name of your liking, say *experiment_1*, you will find the results in the folder `<repository>/testing/tests/experiment_1_n`.
+Here *n* is the lowest free integer such that the name *experiment_1_n* is not in the folder `<repository>/testing/tests`.
