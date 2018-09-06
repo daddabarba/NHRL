@@ -59,7 +59,7 @@ getPlot <- function(data, max=5, title=""){
   
 }
 
-#Generating plots
+#Generating plots (move in the folder containing all tests results)
 test.mat <- getMatrixData("med_exp_X_1")
 
 p.1 = getPlot(test.mat[[1]])
@@ -76,9 +76,9 @@ p.11 = getPlot(test.mat[[11]])
 p.12 = getPlot(test.mat[[12]])
 
 title <- textGrob("Baseline Performance in 7x7 maze",gp=gpar(fontsize=20))
-grid.arrange(p.1,p.2,p.3,p.4,p.5,p.6,p.7,p.8,p.9,p.10,p.11,p.12, nrow=3, top=title)
+grid.arrange(p.1,p.2,p.3,p.4,p.5,p.6,p.7,p.8,p.9,p.10,p.11,p.12, nrow=2, top=title)
 
-title <- "Average Baseline Performance in 7x7 maze"
+title <- "Average Baseline Performance in 5x5 maze"
 getPlot(averageSet(test.mat), title=title)
 getPlot(averageSet(test.mat), max=1, title=title)
 
@@ -100,3 +100,4 @@ avg.base.med <- averageSet(data.base.med)
 avg.hier.med <- averageSet(data.hier.med)
 
 t.test(avg.base.med, avg.hier.med, paired=TRUE, conf.level = 0.95)
+ 
