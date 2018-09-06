@@ -19,9 +19,15 @@ sys.path.append('../simulation/GUI/')
 
 import os
 
-import matplotlib.pyplot as plt
-
 import agent
+
+import pip
+
+installed_pkgs = [pkg.key for pkg in pip.get_installed_distributions()]
+asPlotPkg = 'matplotlib' in installed_pkgs
+
+if asPlotPkg:
+    import matplotlib.pyplot as plt
 
 
 graphic = False
@@ -157,14 +163,15 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     print("result files generated")
 
-    plt.plot(pT)
-    plt.savefig(path + 'timePlot.png')
+    if asPlotPkg:
+        plt.plot(pT)
+        plt.savefig(path + 'timePlot.png')
 
-    plt.clf()
+        plt.clf()
 
-    plt.plot(pU)
-    plt.draw()
-    plt.savefig(path + 'visaUsePlot.png')
+        plt.plot(pU)
+        plt.draw()
+        plt.savefig(path + 'visaUsePlot.png')
 
     params = open(path + 'parameters.txt', 'w')
 

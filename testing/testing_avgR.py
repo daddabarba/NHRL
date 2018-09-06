@@ -19,11 +19,17 @@ sys.path.append('../simulation/GUI/')
 
 import os
 
-import matplotlib.pyplot as plt
-
 import agent
 
 import qLearningAgent as qLA
+
+import pip
+
+installed_pkgs = [pkg.key for pkg in pip.get_installed_distributions()]
+asPlotPkg = 'matplotlib' in installed_pkgs
+
+if asPlotPkg:
+    import matplotlib.pyplot as plt
 
 graphic = False
 printSupp = True
@@ -125,14 +131,15 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     print("result files generated")
 
-    plt.plot(pR)
-    plt.savefig(path + 'rewardPlot.png')
+    if asPlotPkg:
+        plt.plot(pR)
+        plt.savefig(path + 'rewardPlot.png')
 
-    plt.clf()
+        plt.clf()
 
-    plt.plot(pM)
-    plt.draw()
-    plt.savefig(path + 'avgRewardPlot.png')
+        plt.plot(pM)
+        plt.draw()
+        plt.savefig(path + 'avgRewardPlot.png')
 
     for k in range(pars.iterations):
         fileM.write("%s" % pM[k])
