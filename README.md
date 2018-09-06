@@ -9,6 +9,7 @@ This project was built on **python 3.5.2**. In order to run the following packag
 * numpy **1.14.15**
 * tensorflow **1.10.0**
 * matplotlib **2.2.2** (*optional*, for GUI)
+* pip (for package checking)
 
 
 ## Running the project
