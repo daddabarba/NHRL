@@ -17,6 +17,8 @@ This project was built on **python 3.5.2**. In order to run the following packag
 
 ## Running the project
 
+Before running any code from the project, please make use of the module import helper in `<repository>/import_dir`. Go to `<repository>/import_dir`, and run `source ./addPaths.sh`. The changes made by this script should hold as long as the terminal is not closed and the command `source ./removePaths.sh` is not executed. To know more about its usage, you can visit [its original repo](https://github.com/daddabarba/python_import_assist "Import helper repo").
+
 ### Agent
 
 To run the agent (manually), go to `<repository>/simulation/simModel/agent`, then run the script `load_agent.py`. Add the option `-i` to keep the script running after execution, otherwise it will close as soon as the agent is loaded.
