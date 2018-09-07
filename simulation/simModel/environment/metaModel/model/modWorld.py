@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append('../../../../../messages/')
-
 import numpy as np
 import random as rand
 

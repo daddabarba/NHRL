@@ -1,9 +1,4 @@
-import sys
 import json
-
-sys.path.append('../')
-
-sys.path.append('../../../messages/')
 
 import parameters as par
 

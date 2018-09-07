@@ -1,13 +1,4 @@
-import sys
-
-sys.path.append('model/')
-
-sys.path.append('../../')
-
-sys.path.append('../../../../messages/')
-
 import modWorld as modw
-import random as rand
 
 import parameters as par
 

@@ -1,13 +1,3 @@
-import sys
-
-sys.path.append('../environment/')
-sys.path.append('../agent/learningAgent/')
-sys.path.append('../agent/sensors/')
-
-sys.path.append('../../../systemFunctions/')
-
-sys.path.append('../../../messages/')
-
 import environment as env
 import qLearningAgent as qLA
 import sensors
