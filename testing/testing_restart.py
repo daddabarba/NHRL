@@ -1,22 +1,6 @@
 import sys
 import json
 
-sys.path.append('../messages/')
-
-sys.path.append('../simulation/simModel/')
-
-sys.path.append('../simulation/simModel/agent/')
-sys.path.append('../simulation/simModel/agent/learningAgent/')
-sys.path.append('../simulation/simModel/agent/sensors/')
-
-sys.path.append('../simulation/simModel/environment/')
-sys.path.append('../simulation/simModel/environment/features')
-sys.path.append('../simulation/simModel/environment/metaModel/')
-sys.path.append('../simulation/simModel/environment/metaModel/model/')
-sys.path.append('../systemFunctions/')
-
-sys.path.append('../simulation/GUI/')
-
 import os
 
 import agent

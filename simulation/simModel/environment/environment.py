@@ -1,26 +1,8 @@
-import sys
-
-sys.path.append('../agent/')
-sys.path.append('../environment/metaModel/model/')
-sys.path.append('../environment/metaModel/')
-
-sys.path.append('../')
-
-sys.path.append('../../../systemFunctions/')
-
-sys.path.append('../../GUI/')
-sys.path.append('../../../messages/')
-
-sys.path.append('../environment/features/')
-
 import convertion as con
 
-import agent
-import modWorld as modw
 import preDefModels as pdm
 
 import features
-
 import parameters as par
 
 import metaFunctions as meta

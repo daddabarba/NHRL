@@ -1,7 +1,3 @@
-import sys
-
-sys.path.append('../../../../../messages/')
-
 import tensorflow as tf
 from tensorflow.python.ops import rnn_cell
 from tensorflow.contrib import rnn
