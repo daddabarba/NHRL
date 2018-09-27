@@ -180,8 +180,10 @@ class temporalDifference(neuralQL):
     class tdObservation:
         def __init__(self, gamma, _lambda):
 
-            self.R = []
-            self.P = []
+            self.size = 10*_lambda;
+
+            self.R = [None for i in range(self.size)]
+            self.P = [None for i in range(self.size)]
 
             self.gamma = gamma
             self._lambda = _lambda
@@ -189,31 +191,32 @@ class temporalDifference(neuralQL):
             self.tot = 0
 
             self.start = 0
+            self.end = 0
 
             self.factor = self.gamma**self._lambda
             self.remove = (1/self.gamma)
 
+            self.n = 0
+
         def update(self, val, action, state):
             
             if not state or (not action and action!=0):
-                return 
+                return
+
+            self.n += 1
             
-            self.R.append(val)
-            self.P.append((state, action))
+            self.R[self.end] = val
+            self.P[self.end] = (state, action)
+
+            self.end = (self.end+1)%self.size
 
             if self.isExceeding():
                 self.tot -= self.R[self.start]
 
-                self.start += 1
+                self.start = (self.start+1)%self.size
 
                 self.tot *= self.remove
                 self.tot += val*self.factor
-
-                if len(self.R)>(10*self._lambda):
-                    self.R = self.R[::-1][0:self._lambda][::-1]
-                    self.P = self.P[::-1][0:self._lambda][::-1]
-
-                    self.start = 0
 
             else:
                 self.tot += val*(self.gamma**(len(self.R)-1))
@@ -228,10 +231,10 @@ class temporalDifference(neuralQL):
             return self.P[self.start][1]
 
         def isFull(self):
-            return len(self.R)>=(self._lambda+1)
+            return self.n>=(self._lambda+1)
 
         def isExceeding(self):
-            return len(self.R)>(self._lambda+1)
+            return self.n>(self._lambda+1)
 
     def __init__(self, agent, rs, stateSize, nActions, _lambda, session=None):
         super(temporalDifference, self).__init__(agent, rs, stateSize, nActions, session)
