@@ -21,7 +21,7 @@ _defIB = 5.0
 _defIC = 1.0
 _defILowBound = 0.0
 
-_defLearningRate = 0.35
+_defLearningRate = 0.20
 _defDiscountFactor = 0.98
 
 _defNeuralLearningRate = -1
