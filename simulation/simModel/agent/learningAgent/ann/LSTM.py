@@ -45,7 +45,8 @@ class LSTM():
             # saving lstm prediciton and state function (w.r.t. input placeholder)
             self.prediction = self.neural_network_model()
             # setting cost function (in function of prediction and output placeholder for target values)
-            self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.prediction, labels=self.yPH))
+            #self.cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.prediction, labels=self.yPH))
+            self.cost = tf.reduce_mean(tf.losses.mean_squared_error(labels=self.yPH, predictions=self.prediction))
             # setting optimizer
             if alpha and alpha>0:
                 self.optimizer = tf.train.AdamOptimizer(learning_rate=alpha).minimize(self.cost)
