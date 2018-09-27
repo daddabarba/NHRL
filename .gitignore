@@ -1,4 +1,4 @@
 *.pyc
 .idea/*
 __pycache__/*
-import_dir/data/*
+import_dir/*
