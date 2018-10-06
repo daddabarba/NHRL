@@ -140,6 +140,8 @@ class LSTM():
             fd = {self.xPH: np.array([train_x]), self.yPH: [train_y]}
 
             prediction, _, c = (self.sess).run([self.prediction, self.optimizer, self.cost], feed_dict=fd)
+            tf.reset_default_graph()
+
             mes.currentMessage("Epoch loss: " + str(c))
 
             self.epoch += 1
