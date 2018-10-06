@@ -137,7 +137,6 @@ class LSTM():
                 state = self.cell
 
         with aux.tempAssign(self.sess, self.cell, state):
-
             fd = {self.xPH: np.array([train_x]), self.yPH: [train_y]}
 
             prediction, _, c = (self.sess).run([self.prediction, self.optimizer, self.cost], feed_dict=fd)
@@ -146,7 +145,7 @@ class LSTM():
             self.epoch += 1
 
             self.set_train_state(self.getFullState(train_x))
-        self.set_state(self.train_cell)
+        #self.set_state(self.train_cell)
 
         return (prediction)
 
