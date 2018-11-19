@@ -36,12 +36,12 @@ class LSTM():
         # counting epochs
         self.epoch = 1
 
-        # i/o placeholders
-        self.xPH = tf.placeholder('float', shape=(None, self.input_size))
-        self.yPH = tf.placeholder('float', shape=(1, self.output_size))
-
         with tf.variable_scope(self.scope):
 
+            # i/o placeholders
+            self.xPH = tf.placeholder('float', shape=(None, self.input_size))
+            self.yPH = tf.placeholder('float', shape=(1, self.output_size))
+            
             # saving lstm prediciton and state function (w.r.t. input placeholder)
             self.prediction = self.neural_network_model()
             # setting cost function (in function of prediction and output placeholder for target values)
