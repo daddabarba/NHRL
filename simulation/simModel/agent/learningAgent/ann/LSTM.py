@@ -3,15 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-#import tensorflow as tf
-#from tensorflow.python.ops import rnn_cell
-#from tensorflow.contrib import rnn
-
 import numpy as np
 
-#import lstmAux as aux
-
-#import cross
+import copy
 
 import messages as mes
 
@@ -49,6 +43,9 @@ class LSTMRL(nn.Module):
 
 class LSTM():
 
+    @classmethod
+    def copy_net(cls, net):
+        return copy.deepcopy(net)
 
     def __init__(self, input_size, rnn_size, output_size, alpha=0.99):
 
@@ -104,3 +101,11 @@ class LSTM():
 
         loss.backward()
         self.optimizer.step()
+
+    def duplicate_output(self, idx):
+
+        self.net.linear_layer.weight = F.pad(self.net.linear_layer.weight, (0, 0, 0, 1))
+        self.net.linear_layer.bias = F.pad(self.net.linear_layer.bias, (0, 1))
+
+        self.net.linear_layer.weight[-1] += self.net.linear_layer.weight[idx]
+        self.net.linear_layer.bias[-1] += self.net.linear_layer.bias[idx]
