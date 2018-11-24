@@ -7,11 +7,11 @@ In `<repository>/testing/tests/` you can find the data collected and used in the
 
 ## Python
 
-This project was built on **python 3.5.2**. In order to run the following packages are needed:
+This project was built on **python 3.6.7**. In order to run the following packages are needed:
 
-* numpy **1.14.15**
-* tensorflow **1.10.0**
-* matplotlib **2.2.2** (*optional*, for GUI)
+* numpy **>=1.14.15**
+* pytorch **>=0.4.1**
+* matplotlib **>=2.2.2** (*optional*, for GUI)
 * pip (for package checking)
 
 
