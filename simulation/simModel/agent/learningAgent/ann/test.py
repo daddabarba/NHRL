@@ -9,19 +9,16 @@ net = LSTM.LSTM(3,5,4)
 
 for i in range(1,10000):
 
-	print("EPOCH #" + str(i), end="")
-
 	start_t = time.time()
 
 	#TRAINING
-	net.train_neural_network(x,y)
+	cost = net.train(x,y)
 
 	#UPDATING STATE
-	net.static_update(x)
+	net.state_update()
 
 	end_t = time.time()
 	tot_t = round(end_t - start_t, 4)
 
-	print("\ttime: " + str(tot_t) + "s", end="")
-	print(" ")
+	print("EPOCH #" + str(i) + "\ttime: " + str(tot_t) + "s" + "\tloss: " + str(cost.detach().numpy()))
 

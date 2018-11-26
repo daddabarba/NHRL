@@ -34,6 +34,9 @@ class LSTMRL(nn.Module):
 
         self.hc_state = self.hc_state_temp
 
+    def detach_state(self):
+        self.hc_state = (self.hc_state[0].detach(), self.hc_state[1].detach())
+
     def forward(self, x):
 
         out_rnn, self.hc_state_temp = self.lstm_layer(x, self.hc_state)
@@ -55,23 +58,50 @@ class LSTM():
 
         self.net = LSTMRL(input_size, rnn_size, output_size)
 
-        self.loss_function = nn.MSELoss(reduction='elementwise-mean')
+        self.loss_function = nn.MSELoss(reduction='elementwise_mean')
         self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
 
-    def __call__(self):
+    def state(self):
         return self.net.hc_state.detach().numpy()[1]
 
     def __call__(self, x):
 
         with torch.no_grad():
-            out = self.net(x)
+            out = self.net(self.toTensor(x))
 
         return out.detach().numpy()
 
     def state_update(self, x=None):
-        self.net.state_update(x)
+        self.net.state_update(self.toTensor(x))
 
     def train(self, x, y):
+
+        x = self.toTensor(x)
+
+        if not isinstance(y, torch.Tensor):
+            y = torch.Tensor(np.array(y))
+
+        if (len(x.shape) != 3) or x.shape[-1]!=self.input_size:
+            raise Exception("Wrong input format")
+
+        if (len(y.shape) != 1) or y.shape[-1]!=self.output_size:
+            raise Exception("Wrong target format")
+
+        self.net.zero_grad()
+        self.net.detach_state()
+
+        out = self.net(x)
+        loss = self.loss_function(out, y)
+
+        loss.backward()
+        self.optimizer.step()
+
+        return loss
+
+    def toTensor(self, x):
+
+        if not x:
+            return x
 
         if not isinstance(x, torch.Tensor):
 
@@ -84,23 +114,7 @@ class LSTM():
 
             x = torch.Tensor(x)
 
-        if not isinstance(y, torch.Tensor):
-            y = torch.Tensor(np.array(y))
-
-        if (len(x.shape) != 3) or x.shape[-1]!=self.input_size:
-            raise Exception("Wrong input format")
-
-        if (len(y.shape) != 1) or y.shape[-1]!=self.output_size:
-            raise Exception("Wrong target format")
-
-        self.net.zero_grad()
-
-        # model.hidden = model.init_hidden()
-        out = self.net(x)
-        loss = self.loss_function(out, y)
-
-        loss.backward()
-        self.optimizer.step()
+        return x
 
     def duplicate_output(self, idx):
 
