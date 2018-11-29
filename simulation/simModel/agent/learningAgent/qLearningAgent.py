@@ -1,10 +1,9 @@
 import sys
 
-import tensorflow as tf
 import numpy as np
 import random as rand
 
-import LSTM as lstm
+import LSTM
 
 import messages as mes
 
@@ -130,32 +129,29 @@ class neuralQL(qLA):
         target = self.stateValues(state, rs)
         target[action] = update
 
-        ((self.Q)[rs]).train_neural_network(state, target)
+        ((self.Q)[rs]).train(state, target)
 
     def stateValues(self, state, rs):
-        return ((self.Q)[rs]).getLastPrediction(state)
+        return self.Q[rs](state)
 
     def _setQ(self, rs, stateSize, nActions):
         self.Q = []
 
-        if not self.sess:
-            self.sess = tf.Session()
-
         for i in range(rs):
-            (self.Q).append(lstm.LSTM(stateSize, _defRnnSize, nActions, self.agent.livePar.neuralLearningRate, session=self.sess))
+            (self.Q).append(LSTM.LSTM(stateSize, _defRnnSize, nActions, self.agent.livePar.neuralLearningRate))
 
     def copyAction(self, ind):
         for i in range(len(self.Q)):
-            self.Q[i] = self.Q[i].copyOutput(ind)
+            self.Q[i] = self.Q[i].duplicate_output(ind)
 
     def copyPolicy(self, ind):
-        self.Q.append(self.Q[ind].copyNetwork())
+        self.Q.append(LSTM.LSTM.copy_net(self.Q[ind]))
 
     def getNNState(self, rs):
-        return self.Q[rs].getLastState()
+        return self.Q[rs].state()
 
     def rec(self, rs):
-        self.Q[rs].static_update(self.previous_state)
+        self.Q[rs].state_update()
 
 class batchQL(neuralQL):
     def __init__(self, agent, rs, stateSize, nActions, batchSize, session=None):
@@ -175,8 +171,8 @@ class batchQL(neuralQL):
             self.currentBatch = []
 
 
-class temporalDifference(neuralQL):
-    class tdObservation:
+class nstepQL(neuralQL):
+    class observation:
         def __init__(self, gamma, _lambda):
 
             self.R = []
@@ -233,12 +229,12 @@ class temporalDifference(neuralQL):
             return len(self.R) > (self._lambda + 1)
 
     def __init__(self, agent, rs, stateSize, nActions, _lambda, session=None):
-        super(temporalDifference, self).__init__(agent, rs, stateSize, nActions, session)
+        super(nstepQL, self).__init__(agent, rs, stateSize, nActions, session)
 
         self.gamma = agent.livePar.discountFactor
 
         self._lambda = _lambda
-        self.observations = [self.tdObservation(self.gamma, _lambda) for i in range(len(self.Q))]
+        self.observations = [self.observation(self.gamma, _lambda) for i in range(len(self.Q))]
 
     def learn(self, newState, r):
 
@@ -256,16 +252,16 @@ class temporalDifference(neuralQL):
 
                 if self.observations[rs].isFull():
                     with aux.tempTransition(self, self.observations[rs].getState(), self.observations[rs].getAction(), rs):
-                        super(temporalDifference, self).learn(newState, (rs,self.observations[rs].getVal()))
+                        super(nstepQL, self).learn(newState, (rs,self.observations[rs].getVal()))
 
 
     def updateValue(self, observations, _gamma, prediction):
         return observations + (_gamma**(self._lambda+1)) * prediction
 
     def copyPolicy(self, ind):
-        super(temporalDifference, self).copyPolicy(ind)
+        super(nstepQL, self).copyPolicy(ind)
 
-        self.observations.append(self.tdObservation(self.gamma, self._lambda))
+        self.observations.append(self.observation(self.gamma, self._lambda))
 
 
 #############
@@ -420,12 +416,12 @@ class batchBoltzmann(boltzmann, batchQL):
         self.rec(rs)
         return ret
 
-class tdBoltzmann(boltzmann, temporalDifference):
+class nStepBoltzmann(boltzmann, temporalDifference):
     def __init__(self, agent, rs, r, c, _lambda, session=None):
-        super(tdBoltzmann, self).__init__(agent, rs, r, c, _lambda, session)
+        super(nstepQL, self).__init__(agent, rs, r, c, _lambda, session)
 
     def policy(self, state, rs, learning=False):
-        ret = super(tdBoltzmann, self).policy(state, rs, learning)
+        ret = super(nstepQL, self).policy(state, rs, learning)
 
         self.rec(rs)
         return ret
@@ -664,9 +660,9 @@ class hBatchBoltzmann(hierarchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
         super(hBatchBoltzmann, self).__init__(agent, batchBoltzmann, stateSize, batchSize, nActions, structure)
 
-class hTDBoltzmann(hierarchy):
+class hNStepsBoltzmann(hierarchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
-        super(hTDBoltzmann, self).__init__(agent, tdBoltzmann, stateSize, batchSize, nActions, structure)
+        super(hTDBoltzmann, self).__init__(agent, nStepBoltzmann, stateSize, batchSize, nActions, structure)
 
 class hTDWeightBoltzmann(weightedHierarchy):
     def __init__(self, agent, stateSize, batchSize, nActions=None, structure=[1]):
