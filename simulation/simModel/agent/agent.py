@@ -109,12 +109,9 @@ class agent:
         return self.environment.world._hashFun(sensors)
 
     def updatePerceivedTime(self):
-        self.time += 1
+        self.livePar.time += 1
 
     def _setHistory(self):
-        mes.currentMessage("initializing perceived time")
-        self.time = 0
-
         mes.currentMessage("initializing reward history")
         self.rewardHistory = None
 

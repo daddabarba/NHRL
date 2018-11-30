@@ -15,6 +15,26 @@ rnn_kernel_key = 'rnn/basic_lstm_cell/kernel:0'
 out_weights_key = 'weights'
 out_bias_key = 'biases'
 
+class State_Set():
+
+    def __init__(self, net, newState):
+
+        self.net = net
+
+        self.oldState = net.net.hc_state
+        self.oldState_temp = net.net.hc_state_temp
+
+        self.newState = newState
+
+    def __enter__(self):
+
+        self.net.net.hc_state = self.newState
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+
+        self.net.net.hc_state = self.oldState
+        self.net.net.hc_state_temp = self.oldState_temp
+
 class LSTMRL(nn.Module):
 
 

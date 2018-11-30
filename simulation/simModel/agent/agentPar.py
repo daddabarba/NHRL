@@ -34,6 +34,8 @@ _defBNBound = 3.0
 _defStartQMin = 2 * par.baseReward * (-1 if par.baseReward > 0 else 1)
 _defStartQMax = _defStartQMin * (-1)
 
+_defRNNSize = 128
+
 
 def defInput(mes, defVal):
     return float(input("(" + str(defVal) + ") - " + mes) or str(defVal))
@@ -113,6 +115,10 @@ class agentPar:
 
             mes.currentMessage("Setting bottleneck normalize limit: " + str(_defBNBound))
             self.BNBound = _defBNBound
+
+            self.time = 0
+
+            self.rnnSize = _defRNNSize
 
     def printPars(self):
 
