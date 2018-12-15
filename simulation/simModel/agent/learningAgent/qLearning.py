@@ -16,7 +16,7 @@ class QL():
 		self._gamma = self.pars.discountFactor
 
 	def __call__(self, s):
-		return np.argmax(self.Pi(s))
+		return np.random.choice(self.nActions, p=self.Pi(s))
 
 	def Q(self, s):
 		pass
@@ -140,6 +140,83 @@ class nStepQL(NeuralQL):
 			self.A = np.roll(self.A, -1, axis=0)
 			self.R = np.roll(self.R, -1, axis=0)
 			self.states = np.roll(self.states, -1, axis=0)
+
+
+class hierarchy(QL):
+
+		def __init__(self, nStates, nActions, pars, QLCls, struc=[1]):
+
+			super(hierarchy, self).__init__(nStates, nActions, pars)
+
+			# Add primitve actions to structure
+			struc += [nActions]
+
+			# Initialize layer constructor
+			vecCLS = np.vectorize(QLCls)
+			rep = np.repeat
+
+			# Build hierarchy of policies
+			self.demons = np.array([vecCLS(rep(nStates, struc[i]), rep(struc[i+1], struc[i]), rep(pars, struc[i]))
+										for i in range(0, len(struc)-1)])
+
+			# Build empty state (pdist on actions) and Q (hierarchy of state-action utilities) arrays
+			self.__lastState = None
+			self.__likelihoods = np.empty(len(struc)-1, dtype=object)
+
+			self.PiVec = np.empty(len(struc), dtype=object)
+			self.PiVec[0] = np.array(1.0)
+
+			# self.QVec = np.empty(len(struc)-1, dtype=object)
+			# self.UVec = np.empty(len(struc)-1, dtype=object)
+
+			#Vectorize QL methods
+			self.layerPi = np.vectorize(QLCls.Pi)
+			# self.layerQ = np.vectorize(QLCls.Q)
+			# self.layerU = np.vectorize(QLCls.U)
+
+		# def Q(self, state):
+
+			# for i in range(self.QVec.size):
+				# self.QVec[i] = self.layerQ(self.demons[i], state)
+
+			# return self.QVec
+		
+		# def U(self, state):
+
+			# for i in range(self.UVec.size):
+				# self.UVec[i] = self.layerU(self.demons[i], state)
+
+			# return self.UVec
+
+
+		def __getLikelihoods(self, state):
+
+			for i in range(self.__likelihoods.size):
+				self.__likelihoods[i] = self.layerPi(self.demons[i], state)
+
+			return self.__likelihoods
+
+		def Pi(self, state):
+
+			self.__lastState = state
+			self.__getLikelihoods(state)
+
+			for i in range(1, self.PiVec.size):
+				self.PiVec[i] = self.PiVec[i-1].dot(self.__likelihoods[i-1])
+
+			return self.PiVec[-1]
+
+		def update(self, s1,a,r,s2):
+			return None
+
+		def update_Q(self, s, a, predicted):
+			return None
+
+
+
+
+
+
 
 
 
