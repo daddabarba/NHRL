@@ -1,21 +1,34 @@
 import numpy as np
 
+N = 0
+MU = 1
+VAR = 2
+
 def l(v):
     return np.linalg.norm(v)
 
-def update_mean(mean, N, new_point):
-    return (mean*N + new_point)*(1.0/(N+1))
+class Stats():
 
-def reshape_mean(mean):
-    return np.append(mean, 0.0)
+    def __init__(self, n=0.0, mu=0.0, var=None):
 
-def update_stats(data, new_point):
-    N_t_0 = data['N']
+        self.data = np.empty(3, dtype=object)
 
-    mean_t_0 = data['mu']
-    mean_t_1 = update_mean(mean_t_0, N_t_0, new_point)
+        self.data[N] = n
+        self.data[MU] = mu
+        self.data[VAR] = var
 
-    var_t_0 = data['sd']
-    var_t_1 = (var_t_0*N_t_0 + l(new_point)**2 + N_t_0*(l(mean_t_0)**2) -(N_t_0+1)*(l(mean_t_1)**2))
+    def reshape_mean(self):
+        self.mu = np.append(self.mu, 0.0)
 
-    return {'mu': mean_t_1, 'sd': var_t_1, 'N': N_t_0+1}
+    def update_stats(self, newPoint, weight=1.0):
+
+        newN = self.data[N] + weight
+        newMu = (self.data[MU] * self.data[N] + newPoint * weight) / newN
+
+        if self.data[VAR] or self.data[VAR] == 0.0:
+            self.data[VAR] = (self.data[VAR] * self.data[N] + self.data[N] * ((self.data[MU] ** 2).sum()) + weight * ((newPoint ** 2).sum()) - newN * ((newMu ** 2).sum())) / newN
+        else:
+            self.data[VAR] = 0.0
+
+        self.data[N] = newN
+        self.data[MU] = newMu
