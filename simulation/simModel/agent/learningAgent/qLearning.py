@@ -160,11 +160,7 @@ class hierarchy(QL):
 										for i in range(0, len(struc)-1)])
 
 			# Build empty state (pdist on actions) and Q (hierarchy of state-action utilities) arrays
-			self.__lastState = None
-			self.__likelihoods = np.empty(len(struc)-1, dtype=object)
-
-			self.PiVec = np.empty(len(struc), dtype=object)
-			self.PiVec[0] = np.array(1.0)
+			self.__initStateVariables(len(struc))
 
 			# self.QVec = np.empty(len(struc)-1, dtype=object)
 			# self.UVec = np.empty(len(struc)-1, dtype=object)
@@ -173,6 +169,14 @@ class hierarchy(QL):
 			self.layerPi = np.vectorize(QLCls.Pi)
 			# self.layerQ = np.vectorize(QLCls.Q)
 			# self.layerU = np.vectorize(QLCls.U)
+
+		def __initStateVariables(self, size):
+
+			self.__lastState = None
+			self.__likelihoods = np.empty(size - 1, dtype=object)
+
+			self.PiVec = np.empty(size, dtype=object)
+			self.PiVec[0] = np.array(1.0)
 
 		# def Q(self, state):
 
