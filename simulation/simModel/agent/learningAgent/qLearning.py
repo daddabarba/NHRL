@@ -27,7 +27,7 @@ class QL():
 	def U(self, s):
 		return np.dot(self.Pi(s), self.Q(s))
 
-	def update(self, s1,a,r,s2):
+	def update(self, s1, a, r, s2):
 
 		utility_approx = r + self._gamma*self.U(s2)
 
@@ -169,7 +169,7 @@ class hierarchy(QL):
 			# self.QVec = np.empty(len(struc)-1, dtype=object)
 			# self.UVec = np.empty(len(struc)-1, dtype=object)
 
-			#Vectorize QL methods
+			# Vectorize QL methods
 			self.layerPi = np.vectorize(QLCls.Pi)
 			# self.layerQ = np.vectorize(QLCls.Q)
 			# self.layerU = np.vectorize(QLCls.U)
@@ -206,7 +206,7 @@ class hierarchy(QL):
 
 			return self.PiVec[-1]
 
-		def update(self, s1,a,r,s2):
+		def update(self, s1, a, r, s2):
 			return None
 
 		def update_Q(self, s, a, predicted):
