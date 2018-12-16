@@ -32,3 +32,12 @@ class Stats():
 
         self.data[N] = newN
         self.data[MU] = newMu
+
+    def getVar(self):
+        return self.data[VAR]
+
+    def getMu(self):
+        return self.data[MU]
+
+    def getN(self):
+        return self.data[N]
