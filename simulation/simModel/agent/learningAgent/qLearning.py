@@ -219,6 +219,7 @@ class hierarchy():
 
 			# Add primitve actions to structure
 			struc += [nActions]
+			struc = [1] + struc
 
 			# Initialize layer constructor
 			vecCLS = np.vectorize(QLCls)
@@ -232,7 +233,7 @@ class hierarchy():
 			initStats = np.vectorize(stats.Stats)
 
 			self.stats = np.array([initStats(rep(0.0, struc[i])) for i in range(self.demons.size)], dtype=object)
-			self.layerStats = np.array([stats.Stats() for i in range(self.demons.size)], dtype=object)
+			self.layerStats = stats.Stats()
 
 			self.topDemonStats = stats.Stats()
 
@@ -290,7 +291,7 @@ class hierarchy():
 			# Update stats of each demon
 			for i in range(self.stats.size):
 				self.layerUpdateStats(self.stats[i], s1, self.PiVec[i])
-				self.layerStats[i].update_stats(s1)
+				self.layerStats.update_stats(s1)
 
 			# Update top policy's stats
 			self.topDemonStats.update_stats(self.PiVec[1])
@@ -301,7 +302,7 @@ class hierarchy():
 
 		def actionAbstraction(self, layer, demon):
 
-			if (self.stats[layer][demon].getVar()/self.layerStats[layer].getVa()) > self.pars.SDMax:
+			if (self.stats[layer][demon].getVar()/self.layerStats.getVa()) > self.pars.SDMax and self.stats[layer][demon].getN()>1:
 
 				# Abstract policy at layer layer (with index demon)
 
@@ -309,7 +310,7 @@ class hierarchy():
 					return
 
 				# Copy the demon itself
-				self.demons = np.append(self.demons[layer], copy.copy(self.demons[layer][demon]))
+				self.demons[layer] = np.append(self.demons[layer], copy.copy(self.demons[layer][demon]))
 
 				# Demons in higher levels must be aware of new demon at lower layer
 				self.layerAddAction(self.demons[layer-1], demon)
@@ -326,13 +327,32 @@ class hierarchy():
 
 		def taskAbstraction(self):
 
-			if self.topDemonStats.getVar() == 0 or self.topDemonStats.getN() == 0:
+			if (self.topDemonStats.getVar() == 0) or (self.topDemonStats.getN() == 0):
 				return
 
 			norm = np.linalg.norm(self.__likelihoods[0] - self.topDemonStats.getMu()) / self.topDemonStats.getVar()
 
-			if norm > self.agent.livePar.BNBound:
-				pass
+			if (norm > self.pars.BNBound) and (self.topDemonStats.getN()>1):
+
+				# Construct new top demon
+				parentDemon = self.demons[0][0].getParent()
+
+				self.demons = np.append(np.empty(1), self.demons)
+				self.demons[0] = np.array([parentDemon])
+
+				# Copy previous top demon
+				self.demons[1] = np.append(self.demons[1], copy.copy(self.demons[1][0]))
+
+				# Generate new stats
+
+				self.topDemonStats = stats.Stats(mu=np.array([0.5,0.5]))
+
+				self.stats = np.append(np.empty(1), self.stats)
+				self.stats = np.array([copy.copy(self.stats[1][0])])
+
+				self.stats[1][0].scale(2.0)
+				self.stats[1] = np.append(self.stats[1], copy.copy(self.stats[1][0]))
+
 
 
 
