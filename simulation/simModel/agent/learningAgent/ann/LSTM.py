@@ -37,15 +37,33 @@ class State_Set():
 
 class LSTMRL(nn.Module):
 
-
-    def __init__(self, input_size, rnn_size, output_size):
+    def __init__(self, input_size, rnn_size, output_size, linear_layer=None, lstm_layer=None, hc_state=None):
         super(LSTMRL, self).__init__()
 
-        self.lstm_layer = nn.LSTM(input_size, rnn_size)
-        self.linear_layer = nn.Linear(rnn_size, output_size)
+        self.input_size = input_size
+        self.rnn_size = rnn_size
+        self.output_size = output_size
 
-        self.hc_state = (torch.zeros(1,1,rnn_size), torch.zeros(1,1,rnn_size))
+        if not lstm_layer:
+            self.lstm_layer = nn.LSTM(input_size, rnn_size)
+        else:
+            self.lstm_layer = lstm_layer
+
+        if not linear_layer:
+            self.linear_layer = nn.Linear(rnn_size, output_size)
+        else:
+            self.linear_layer = linear_layer
+
+        if not hc_state:
+            self.hc_state = (torch.zeros(1,1,rnn_size), torch.zeros(1,1,rnn_size))
+        else:
+            self.hc_state = hc_state
+
         self.hc_state_temp = (torch.zeros(1,1,rnn_size), torch.zeros(1,1,rnn_size))
+
+    def __deepcopy__(self, memodict={}):
+
+        return LSTMRL(self.input_size, self.rnn_size, self.output_size, copy.deepcopy(self.linear_layer), copy.deepcopy(self.lstm_layer), copy.deepcopy(self.hc_state))
 
     def state_update(self, x=None):
 
