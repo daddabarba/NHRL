@@ -199,10 +199,6 @@ class hierarchy():
 		def update(self, s1, a, r, s2):
 			return None
 
-		def update_Q(self, s, a, predicted):
-			return None
-
-
 
 
 
