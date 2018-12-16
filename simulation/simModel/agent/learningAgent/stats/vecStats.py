@@ -1,5 +1,7 @@
 import numpy as np
 
+import copy
+
 N = 0
 MU = 1
 VAR = 2
@@ -17,6 +19,9 @@ class Stats():
         self.data[MU] = mu
         self.data[VAR] = var
 
+    def __copy__(self):
+        return Stats(self.data[n], copy.deepcopy(self.data[MU]), self.data[VAR])
+
     def reshape_mean(self):
         self.mu = np.append(self.mu, 0.0)
 
@@ -32,6 +37,12 @@ class Stats():
 
         self.data[N] = newN
         self.data[MU] = newMu
+
+    def scale(self, n):
+
+        self.data[N] *= 1.0 / n
+        self.data[MU] *= 1.0 / n
+        self.data[VAR] *= 1.0 / (n*n)
 
     def getVar(self):
         return self.data[VAR]
