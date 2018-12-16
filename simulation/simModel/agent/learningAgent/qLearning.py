@@ -142,11 +142,14 @@ class nStepQL(NeuralQL):
 			self.states = np.roll(self.states, -1, axis=0)
 
 
-class hierarchy(QL):
+class hierarchy():
 
 		def __init__(self, nStates, nActions, pars, QLCls, struc=[1]):
 
-			super(hierarchy, self).__init__(nStates, nActions, pars)
+			self.pars = pars
+
+			self.nStates = nStates
+			self.nActions = nActions
 
 			# Add primitve actions to structure
 			struc += [nActions]
@@ -162,13 +165,11 @@ class hierarchy(QL):
 			# Build empty state (pdist on actions) and Q (hierarchy of state-action utilities) arrays
 			self.__initStateVariables(len(struc))
 
-			# self.QVec = np.empty(len(struc)-1, dtype=object)
-			# self.UVec = np.empty(len(struc)-1, dtype=object)
-
 			# Vectorize QL methods
 			self.layerPi = np.vectorize(QLCls.Pi, signature='(),(i)->(n)', otypes=[QLCls])
-			# self.layerQ = np.vectorize(QLCls.Q, signature='(),(i)->(n)', otypes=[QLCls])
-			# self.layerU = np.vectorize(QLCls.U, signature='(),(i)->(n)', otypes=[QLCls])
+
+		def __call__(self, state):
+			return np.random.choice(self.nActions, p=self.Pi(state))
 
 		def __initStateVariables(self, size):
 
@@ -177,21 +178,6 @@ class hierarchy(QL):
 
 			self.PiVec = np.empty(size, dtype=object)
 			self.PiVec[0] = np.array(1.0)
-
-		# def Q(self, state):
-
-			# for i in range(self.QVec.size):
-				# self.QVec[i] = self.layerQ(self.demons[i], state)
-
-			# return self.QVec
-		
-		# def U(self, state):
-
-			# for i in range(self.UVec.size):
-				# self.UVec[i] = self.layerU(self.demons[i], state)
-
-			# return self.UVec
-
 
 		def __getLikelihoods(self, state):
 
