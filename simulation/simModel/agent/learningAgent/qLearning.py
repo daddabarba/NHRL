@@ -3,6 +3,8 @@ import numpy as np
 import vecStats as stats
 import LSTM
 
+import random as rand
+
 import copy
 
 class QL():
@@ -47,6 +49,9 @@ class QL():
 	def addAction(self, i=0):
 		self.nActions += 1
 
+	def biasActions(self, a1, a2):
+		return None
+
 	def getParent(self, nBrothers=2):
 		pass
 
@@ -56,7 +61,7 @@ class TabularQL(QL):
 
 		super(TabularQL, self).__init__(nStates, nActions, pars)
 
-		if not table:
+		if table is None:
 			self.table = np.zeros([nStates, nActions])
 		else:
 			self.table = table
@@ -72,7 +77,13 @@ class TabularQL(QL):
 
 	def addAction(self, i=0):
 		super(TabularQL, self).addAction(i)
-		self.Q = np.hstack(( self.Q, self.Q[:, i:(i+1)]))
+		self.Q = np.hstack((self.Q, self.Q[:, i:(i+1)]))
+
+		tweaked = self.biasActions(self.Q[i], self.Q[-1])
+
+		if tweaked is not None:
+			self.Q[i] = tweaked[0]
+			self.Q[-1] = tweaked[1]
 
 	def getParent(self, nBrothers=2):
 
@@ -87,7 +98,7 @@ class NeuralQL(QL):
 	def __init__(self, stateSize, nActions, pars, net=None):
 		super(NeuralQL, self).__init__(stateSize, nActions, pars)
 
-		if not net:
+		if net is None:
 			self.net = LSTM.LSTM(stateSize, self.pars.rnnSize, nActions)
 		else:
 			self.net = net
@@ -110,6 +121,14 @@ class NeuralQL(QL):
 	def addAction(self, i=0):
 		super(NeuralQL, self).addAction(i)
 		self.net.duplicate_output(i)
+
+		_, _b = self.net.getMlp()
+
+		tweaked = self.biasActions(_b[i], _b[-1])
+
+		if tweaked is not None:
+			_b[i] = tweaked[0]
+			_b[-1] = tweaked[-1]
 
 	def getParent(self, nBrothers=2):
 
@@ -136,6 +155,12 @@ class Boltzman(QL):
 		t = self.pars.startPoint - self.pars.speed * self.pars.time
 		return ((np.e ** t) / ((np.e ** t) + 1)) * self.pars.height + self.pars.lowBound
 
+	def biasActions(self, a1, a2):
+
+		# Reduce both of ln(2) with a tweak between -0.25 and 0.25 to differentiate them
+		k = rand.random()*0.5 + 0.25
+
+		return a1 + np.log(1/k), a2 + np.log((k-1)/k)
 
 class nStepQL(NeuralQL):
 
