@@ -89,6 +89,9 @@ class LSTM():
 
         return out.detach().numpy()
 
+    def __deepcopy__(self, memodict={}):
+        return copy.copy(self)
+
     def __copy__(self):
         return LSTM(self.input_size, self.rnn_size, self.output_size, self.alpha, copy.deepcopy(self.net))
 
