@@ -166,9 +166,9 @@ class hierarchy(QL):
 			# self.UVec = np.empty(len(struc)-1, dtype=object)
 
 			# Vectorize QL methods
-			self.layerPi = np.vectorize(QLCls.Pi, signature='(),(i)->(i)', otypes=[QLCls])
-			# self.layerQ = np.vectorize(QLCls.Q, signature='(),(i)->(i)', otypes=[QLCls])
-			# self.layerU = np.vectorize(QLCls.U, signature='(),(i)->(i)', otypes=[QLCls])
+			self.layerPi = np.vectorize(QLCls.Pi, signature='(),(i)->(n)', otypes=[QLCls])
+			# self.layerQ = np.vectorize(QLCls.Q, signature='(),(i)->(n)', otypes=[QLCls])
+			# self.layerU = np.vectorize(QLCls.U, signature='(),(i)->(n)', otypes=[QLCls])
 
 		def __initStateVariables(self, size):
 
