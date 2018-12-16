@@ -143,6 +143,20 @@ class LSTM():
 
         return x
 
+    def getMlp(self):
+        return self.net.linear_layer.weight.detach().numpy(), self.net.linear_layer.bias.detach().numpy()
+
+    def setMlp(self, newW, newB):
+
+        newW = torch.nn.Parameter(torch.Tensor(newW), requires_grad=True)
+        newB = torch.nn.Parameter(torch.Tensor(newB), requires_grad=True)
+
+        if (newW.shape[0] != newB.shape[0]) or (newW.shape[1] != self.rnn_size):
+            return
+
+        self.net.linear_layer.weight = newW
+        self.net.linear_layer.bias = newB
+
     def duplicate_output(self, idx):
 
         self.net.linear_layer.weight = F.pad(self.net.linear_layer.weight, (0, 0, 0, 1))
