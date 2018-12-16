@@ -3,6 +3,7 @@ import numpy as np
 import vecStats as stats
 import LSTM
 
+import copy
 
 class QL():
 
@@ -15,6 +16,9 @@ class QL():
 
 		self._alpha = self.pars.learningRate
 		self._gamma = self.pars.discountFactor
+
+	def __copy__(self):
+		pass
 
 	def __call__(self, s):
 		return np.random.choice(self.nActions, p=self.Pi(s))
@@ -40,14 +44,22 @@ class QL():
 	def update_Q(self, s, a, predicted):
 		pass
 
+	def addAction(self, i=0):
+		self.nActions += 1
 
 class TabularQL(QL):
 
-	def __init__(self, nStates, nActions, pars):
+	def __init__(self, nStates, nActions, pars, table=None):
 
 		super(TabularQL, self).__init__(nStates, nActions, pars)
 
-		self.table = np.zeros([nStates, nActions])
+		if not table:
+			self.table = np.zeros([nStates, nActions])
+		else:
+			self.table = table
+
+	def __copy__(self):
+		return TabularQL(self.nStates, self.nActions, self.pars, copy.deepcopy(self.table))
 
 	def Q(self, s):
 		return self.table[s]
@@ -55,13 +67,23 @@ class TabularQL(QL):
 	def update_Q(self, s, a, predicted):
 		self.Q[s][a] = predicted
 
+	def addAction(self, i=0):
+		super(TabularQL, self).addAction(i)
+		self.Q = np.hstack(( self.Q, self.Q[:, i:(i+1)]))
+
 
 class NeuralQL(QL):
 
-	def __init__(self, stateSize, nActions, pars):
+	def __init__(self, stateSize, nActions, pars, net=None):
 		super(NeuralQL, self).__init__(stateSize, nActions, pars)
 
-		self.net = LSTM.LSTM(stateSize, self.pars.rnnSize, nActions)
+		if not net:
+			self.net = LSTM.LSTM(stateSize, self.pars.rnnSize, nActions)
+		else:
+			self.net = net
+
+	def __copy__(self):
+		return NeuralQL(self.nStates, self.nActions, self.pars, copy.deepcopy(self.net))
 
 	def Q(self, s):
 		return self.net(s)
@@ -74,6 +96,10 @@ class NeuralQL(QL):
 		target[a] += predicted
 
 		self.net.train(s, target)
+
+	def addAction(self, i=0):
+		super(NeuralQL, self).addAction(i)
+		self.net.duplicate_output(i)
 
 
 class Boltzman(QL):
@@ -181,6 +207,7 @@ class hierarchy():
 			self.layerUpdateStats = np.vectorize(stats.Stats.update_stats, signature='(),(i),() -> ()', otypes=[stats.Stats])
 
 			self.abstractLayer = np.vectorize(self.actionAbstraction, signature='(),(),()->()', otypes=[hierarchy])
+			self.layerAddAction = np.vectorize(QLCls.addAction, signature='(),()->()', otypes=[QLCls])
 
 		def __call__(self, state):
 			return np.random.choice(self.nActions, p=self.Pi(state))
@@ -229,12 +256,29 @@ class hierarchy():
 			# Update top policy's stats
 			self.topDemonStats.update_stats(self.PiVec[1])
 
+			# Action abstraction (if possible)
+			for i in range(1, self.demons.size):
+				self.abstractLayer(self, i, np.array(range(self.demons[i].size)))
+
 		def actionAbstraction(self, layer, demon):
 
 			if (self.stats[layer][demon].getVar()/self.layerStats[layer].getVa()) > self.pars.SDMax:
 
-				#Abstract policy at layer layer (with index demon)
+				# Abstract policy at layer layer (with index demon)
 
+				if layer == 0:
+					return
+
+				# Copy the demon itself
+				self.demons = np.append(self.demons[layer], copy.copy(self.demons[layer][demon]))
+
+				# Demons in higher levels must be aware of new demon at lower layer
+				self.layerAddAction(self.demons[layer-1], demon)
+
+				self.__initStateVariables(self.demons.size + 1)
+
+				if layer == 1:
+					self.topDemonStats.reshape_mean()
 
 
 
