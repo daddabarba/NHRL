@@ -47,7 +47,7 @@ class QL():
 	def addAction(self, i=0):
 		self.nActions += 1
 
-	def getParent(self):
+	def getParent(self, nBrothers=2):
 		pass
 
 class TabularQL(QL):
@@ -111,6 +111,20 @@ class NeuralQL(QL):
 		super(NeuralQL, self).addAction(i)
 		self.net.duplicate_output(i)
 
+	def getParent(self, nBrothers=2):
+
+		_w, _b = self.net.getMlp()
+
+		_w = _w.sum(0)/_w.shape[0]
+		_b = _b.sum(0)/_b.shape[0]
+
+		_w = np.repeat(np.array([_w]), nBrothers, axis=0)
+		_b = np.repeat(np.array([_b]), nBrothers, axis=0)
+
+		newNet = copy.copy(self.net)
+		newNet.setMlp(_w, _b)
+
+		return self.__class__(self.nStates, nBrothers, self.pars, newNet)
 
 class Boltzman(QL):
 
