@@ -66,13 +66,18 @@ class LSTMRL(nn.Module):
 
 class LSTM():
 
-    def __init__(self, input_size, rnn_size, output_size, alpha=0.99):
+    def __init__(self, input_size, rnn_size, output_size, alpha=0.99, net=None):
 
         self.input_size = input_size
         self.rnn_size = rnn_size
         self.output_size = output_size
 
-        self.net = LSTMRL(input_size, rnn_size, output_size)
+        self.alpha = alpha
+
+        if not net:
+            self.net = LSTMRL(input_size, rnn_size, output_size)
+        else:
+            self.net = net
 
         self.loss_function = nn.MSELoss(reduction='elementwise_mean')
         self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
@@ -84,8 +89,8 @@ class LSTM():
 
         return out.detach().numpy()
 
-    def __copy__(self):
-        return copy.deepcopy(self)
+    def __deepcopy__(self):
+        return LSTM(self.input_size, self.rnn_size, self.output_size, self.alpha, copy.deepcopy(self.net))
 
     def state(self):
         return self.net.hc_state.detach().numpy()[1]
