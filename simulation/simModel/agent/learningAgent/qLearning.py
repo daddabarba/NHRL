@@ -167,13 +167,14 @@ class hierarchy():
 
 			# Vectorize QL methods
 			self.layerPi = np.vectorize(QLCls.Pi, signature='(),(i)->(n)', otypes=[QLCls])
+			self.layerUpdate = np.vectorize(QLCls.update, signature='(),(i),(),(),(i)->()', otypes=[QLCls])
 
 		def __call__(self, state):
 			return np.random.choice(self.nActions, p=self.Pi(state))
 
 		def __initStateVariables(self, size):
 
-			self.__lastState = None
+			self.__beenTrained = True
 			self.__likelihoods = np.empty(size - 1, dtype=object)
 
 			self.PiVec = np.empty(size, dtype=object)
@@ -188,7 +189,7 @@ class hierarchy():
 
 		def Pi(self, state):
 
-			self.__lastState = state
+			self.__beenTrained = False
 			self.__getLikelihoods(state)
 
 			for i in range(1, self.PiVec.size):
@@ -197,9 +198,14 @@ class hierarchy():
 			return self.PiVec[-1]
 
 		def update(self, s1, a, r, s2):
-			return None
 
+			if self.__beenTrained:
+				self.Pi(s1)
 
+			for i in range(self.demons.size):
+				self.layerUpdate(self.demons[i], s1, a, r*self.PiVec[i], s2)
+
+			self.__beenTrained = True
 
 
 
