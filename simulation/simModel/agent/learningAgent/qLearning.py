@@ -1,5 +1,6 @@
 import numpy as np
 
+import vecStats as stats
 import LSTM
 
 
@@ -160,7 +161,15 @@ class hierarchy():
 
 			# Build hierarchy of policies
 			self.demons = np.array([vecCLS(rep(nStates, struc[i]), rep(struc[i+1], struc[i]), rep(pars, struc[i]))
-										for i in range(0, len(struc)-1)])
+										for i in range(len(struc)-1)], dtype=object)
+
+			#Keep track of stats
+			initStats = np.vectorize(stats.Stats)
+
+			self.stats = np.array([initStats(rep(0.0, struc[i])) for i in range(self.demons.size)], dtype=object)
+			self.layerStats = np.array([stats.Stats() for i in range(self.demons.size)], dtype=object)
+
+			self.topDemonStats = stats.Stats()
 
 			# Build empty state (pdist on actions) and Q (hierarchy of state-action utilities) arrays
 			self.__initStateVariables(len(struc))
@@ -168,6 +177,10 @@ class hierarchy():
 			# Vectorize QL methods
 			self.layerPi = np.vectorize(QLCls.Pi, signature='(),(i)->(n)', otypes=[QLCls])
 			self.layerUpdate = np.vectorize(QLCls.update, signature='(),(i),(),(),(i)->()', otypes=[QLCls])
+
+			self.layerUpdateStats = np.vectorize(stats.Stats.update_stats, signature='(),(i),() -> ()', otypes=[stats.Stats])
+
+			self.abstractLayer = np.vectorize(self.actionAbstraction, signature='(),(),()->()', otypes=[hierarchy])
 
 		def __call__(self, state):
 			return np.random.choice(self.nActions, p=self.Pi(state))
@@ -202,11 +215,25 @@ class hierarchy():
 			if self.__beenTrained:
 				self.Pi(s1)
 
+			# Train each demon with the respective weighted reward
 			for i in range(self.demons.size):
 				self.layerUpdate(self.demons[i], s1, a, r*self.PiVec[i], s2)
 
 			self.__beenTrained = True
 
+			# Update stats of each demon
+			for i in range(self.stats.size):
+				self.layerUpdateStats(self.stats[i], s1, self.PiVec[i])
+				self.layerStats[i].update_stats(s1)
+
+			# Update top policy's stats
+			self.topDemonStats.update_stats(self.PiVec[1])
+
+		def actionAbstraction(self, layer, demon):
+
+			if (self.stats[layer][demon].getVar()/self.layerStats[layer].getVa()) > self.pars.SDMax:
+
+				#Abstract policy at layer layer (with index demon)
 
 
 
