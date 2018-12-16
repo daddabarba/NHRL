@@ -44,17 +44,17 @@ class LSTMRL(nn.Module):
         self.rnn_size = rnn_size
         self.output_size = output_size
 
-        if not lstm_layer:
+        if lstm_layer is None:
             self.lstm_layer = nn.LSTM(input_size, rnn_size)
         else:
             self.lstm_layer = lstm_layer
 
-        if not linear_layer:
+        if linear_layer is None:
             self.linear_layer = nn.Linear(rnn_size, output_size)
         else:
             self.linear_layer = linear_layer
 
-        if not hc_state:
+        if hc_state is None:
             self.hc_state = (torch.zeros(1,1,rnn_size), torch.zeros(1,1,rnn_size))
         else:
             self.hc_state = hc_state
@@ -67,7 +67,7 @@ class LSTMRL(nn.Module):
 
     def state_update(self, x=None):
 
-        if x:
+        if x is not None:
             self.forward(x)
 
         self.hc_state = self.hc_state_temp
@@ -92,7 +92,7 @@ class LSTM():
 
         self.alpha = alpha
 
-        if net==None:
+        if net is None:
             self.net = LSTMRL(input_size, rnn_size, output_size)
         else:
             self.net = net
@@ -145,7 +145,7 @@ class LSTM():
 
     def toTensor(self, x):
 
-        if (not isinstance(x, np.ndarray) and not isinstance(x, torch.Tensor)) and x==None:
+        if (not isinstance(x, np.ndarray) and not isinstance(x, torch.Tensor)) and x is None:
             return x
 
         if not isinstance(x, torch.Tensor):
