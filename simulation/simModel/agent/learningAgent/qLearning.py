@@ -49,10 +49,10 @@ class QL():
 	def addAction(self, i=0):
 		self.nActions += 1
 
-	def biasActions(self, a1, a2):
+	def biasAction(self, a):
 		return None
 
-	def getParent(self, nBrothers=2):
+	def getParent(self):
 		pass
 
 class TabularQL(QL):
@@ -79,16 +79,22 @@ class TabularQL(QL):
 		super(TabularQL, self).addAction(i)
 		self.Q = np.hstack((self.Q, self.Q[:, i:(i+1)]))
 
-		tweaked = self.biasActions(self.Q[i], self.Q[-1])
+		tweaked = self.biasAction(self.Q[i])
 
 		if tweaked is not None:
 			self.Q[i] = tweaked[0]
 			self.Q[-1] = tweaked[1]
 
-	def getParent(self, nBrothers=2):
+	def getParent(self):
 
 		parentTable = self.table.sum(1)/self.table.shape[1]
-		parentTable = np.transpose(np.repeat(np.array([parentTable]), nBrothers, axis=0))
+
+		tweaked = self.biasAction(parentTable)
+
+		if tweaked is not None:
+			parentTable = np.transpose(np.array([tweaked[0], tweaked[1]]))
+		else:
+			parentTable = np.transpose(np.repeat(np.array([parentTable]), 2, axis=0))
 
 		return self.__class__(self.nStates, nBrothers, self.pars, parentTable)
 
@@ -124,21 +130,27 @@ class NeuralQL(QL):
 
 		_, _b = self.net.getMlp()
 
-		tweaked = self.biasActions(_b[i], _b[-1])
+		tweaked = self.biasActions(_b[i])
 
 		if tweaked is not None:
 			_b[i] = tweaked[0]
 			_b[-1] = tweaked[-1]
 
-	def getParent(self, nBrothers=2):
+	def getParent(self):
 
 		_w, _b = self.net.getMlp()
 
 		_w = _w.sum(0)/_w.shape[0]
 		_b = _b.sum(0)/_b.shape[0]
 
-		_w = np.repeat(np.array([_w]), nBrothers, axis=0)
-		_b = np.repeat(np.array([_b]), nBrothers, axis=0)
+		tweaked_b = self.biasAction(_b)
+
+		_w = np.array([_w, _w])
+
+		if tweaked_b is not None:
+			_b = np.array([tweaked_b[0], tweaked_b[1]])
+		else:
+			_b = np.array([_b, _b])
 
 		newNet = copy.copy(self.net)
 		newNet.setMlp(_w, _b)
@@ -155,12 +167,12 @@ class Boltzman(QL):
 		t = self.pars.startPoint - self.pars.speed * self.pars.time
 		return ((np.e ** t) / ((np.e ** t) + 1)) * self.pars.height + self.pars.lowBound
 
-	def biasActions(self, a1, a2):
+	def biasAction(self, a):
 
 		# Reduce both of ln(2) with a tweak between -0.25 and 0.25 to differentiate them
 		k = rand.random()*0.5 + 0.25
 
-		return a1 + np.log(1/k), a2 + np.log((k-1)/k)
+		return a + np.log(1/k), a + np.log((k-1)/k)
 
 class nStepQL(NeuralQL):
 
