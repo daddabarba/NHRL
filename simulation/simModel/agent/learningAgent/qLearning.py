@@ -47,6 +47,9 @@ class QL():
 	def addAction(self, i=0):
 		self.nActions += 1
 
+	def getParent(self):
+		pass
+
 class TabularQL(QL):
 
 	def __init__(self, nStates, nActions, pars, table=None):
@@ -59,7 +62,7 @@ class TabularQL(QL):
 			self.table = table
 
 	def __copy__(self):
-		return TabularQL(self.nStates, self.nActions, self.pars, copy.deepcopy(self.table))
+		return self.__class__(self.nStates, self.nActions, self.pars, copy.deepcopy(self.table))
 
 	def Q(self, s):
 		return self.table[s]
@@ -70,6 +73,13 @@ class TabularQL(QL):
 	def addAction(self, i=0):
 		super(TabularQL, self).addAction(i)
 		self.Q = np.hstack(( self.Q, self.Q[:, i:(i+1)]))
+
+	def getParent(self, nBrothers=2):
+
+		parentTable = self.table.sum(1)/self.table.shape[1]
+		parentTable = np.transpose(np.repeat(np.array([parentTable]), nBrothers, axis=0))
+
+		return self.__class__(self.nStates, nBrothers, self.pars, parentTable)
 
 
 class NeuralQL(QL):
@@ -83,7 +93,7 @@ class NeuralQL(QL):
 			self.net = net
 
 	def __copy__(self):
-		return NeuralQL(self.nStates, self.nActions, self.pars, copy.deepcopy(self.net))
+		return self.__class__(self.nStates, self.nActions, self.pars, copy.deepcopy(self.net))
 
 	def Q(self, s):
 		return self.net(s)
@@ -115,8 +125,8 @@ class Boltzman(QL):
 
 class nStepQL(NeuralQL):
 
-	def __init__(self, stateSize, nActions, pars):
-		super(nStepQL, self).__init__(stateSize, nActions, pars)
+	def __init__(self, stateSize, nActions, pars, net=None):
+		super(nStepQL, self).__init__(stateSize, nActions, pars, net)
 
 		self._lambda = self.pars.batchSize
 
@@ -132,6 +142,21 @@ class nStepQL(NeuralQL):
 
 		self.factor = self._gamma ** (self._lambda-1)
 		self.remove = (1 / self._gamma)
+
+	def __copy__(self):
+
+		ret = super(nStepQL, self).__copy__()
+		ret.setHistory(copy.deepcopy(self.S), copy.deepcopy(self.states), copy.deepcopy(self.R), r_tot, copy.deepcopy(self.A))
+
+		return ret
+
+	def setHistory(self, S, states, R, r_tot, A):
+
+		self.S = S
+		self.states = states
+		self.R = R
+		self.r_tot = r_tot
+		self.A = A
 
 	def update(self, s1, a, r, s2):
 
@@ -284,6 +309,17 @@ class hierarchy():
 
 				if layer == 1:
 					self.topDemonStats.reshape_mean()
+
+		def taskAbstraction(self):
+
+			if self.topDemonStats.getVar() == 0 or self.topDemonStats.getN() == 0:
+				return
+
+			norm = np.linalg.norm(self.__likelihoods[0] - self.topDemonStats.getMu()) / self.topDemonStats.getVar()
+
+			if norm > self.agent.livePar.BNBound:
+				pass
+
 
 
 
