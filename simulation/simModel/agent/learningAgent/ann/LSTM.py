@@ -74,7 +74,7 @@ class LSTM():
 
         self.alpha = alpha
 
-        if not net:
+        if net==None:
             self.net = LSTMRL(input_size, rnn_size, output_size)
         else:
             self.net = net
@@ -127,7 +127,7 @@ class LSTM():
 
     def toTensor(self, x):
 
-        if not x:
+        if (not isinstance(x, np.ndarray) and not isinstance(x, torch.Tensor)) and x==None:
             return x
 
         if not isinstance(x, torch.Tensor):
