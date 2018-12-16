@@ -275,7 +275,12 @@ class hierarchy():
 				# Demons in higher levels must be aware of new demon at lower layer
 				self.layerAddAction(self.demons[layer-1], demon)
 
+				# Update stats and state variables
+
 				self.__initStateVariables(self.demons.size + 1)
+
+				self.stats[layer][demon].scale(2.0)
+				self.stats[layer] = np.append(self.stats[layer], copy.copy(self.stats[layer][demon]))
 
 				if layer == 1:
 					self.topDemonStats.reshape_mean()
