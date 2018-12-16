@@ -66,10 +66,6 @@ class LSTMRL(nn.Module):
 
 class LSTM():
 
-    @classmethod
-    def copy_net(cls, net):
-        return copy.deepcopy(net)
-
     def __init__(self, input_size, rnn_size, output_size, alpha=0.99):
 
         self.input_size = input_size
@@ -81,15 +77,18 @@ class LSTM():
         self.loss_function = nn.MSELoss(reduction='elementwise_mean')
         self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
 
-    def state(self):
-        return self.net.hc_state.detach().numpy()[1]
-
     def __call__(self, x):
 
         with torch.no_grad():
             out = self.net(self.toTensor(x))
 
         return out.detach().numpy()
+
+    def __copy__(self):
+        return copy.deepcopy(self)
+
+    def state(self):
+        return self.net.hc_state.detach().numpy()[1]
 
     def state_update(self, x=None):
         self.net.state_update(self.toTensor(x))
