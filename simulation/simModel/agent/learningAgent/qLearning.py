@@ -139,7 +139,7 @@ class NeuralQL(QL):
 
 		_, _b = self.net.getMlp()
 
-		tweaked = self.biasActions(_b[i])
+		tweaked = self.biasAction(_b[i])
 
 		if tweaked is not None:
 			_b[i] = tweaked[0]
