@@ -117,12 +117,17 @@ class NeuralQL(QL):
 	def __copy__(self):
 		return self.__class__(self.nStates, self.nActions, self.pars, copy.deepcopy(self.net))
 
+	def __call__(self, s):
+
+		ret = super(NeuralQL, self).__call__(s)
+
+		self.net.state_update()
+		return ret
+
 	def Q(self, s):
 		return self.net(s)
 
 	def update_Q(self, s, a, predicted):
-
-		self.net.state_update()
 
 		target = np.zeros(self.nActions)
 		target[a] += predicted
@@ -259,7 +264,7 @@ class nStepQL(NeuralQL):
 
 class hierarchy():
 
-		def __init__(self, nStates, nActions, pars, QLCls, struc=[1]):
+		def __init__(self, nStates, nActions, pars, QLCls, struc=[]):
 
 			self.pars = pars
 
@@ -293,7 +298,7 @@ class hierarchy():
 			self.layerPi = np.vectorize(QLCls.Pi, signature='(),(i)->(n)', otypes=[QLCls])
 			self.layerUpdate = np.vectorize(QLCls.update, signature='(),(i),(),(),(i)->()', otypes=[QLCls])
 
-			self.layerUpdateStats = np.vectorize(stats.Stats.update_stats, signature='(),(i),() -> ()', otypes=[stats.Stats])
+			self.layerUpdateStats = np.vectorize(stats.Stats.update_stats, signature='(),(i),()->()', otypes=[stats.Stats])
 
 			self.abstractLayer = np.vectorize(self.actionAbstraction, signature='(),(),()->()', otypes=[hierarchy])
 			self.layerAddAction = np.vectorize(QLCls.addAction, signature='(),()->()', otypes=[QLCls])
@@ -304,10 +309,10 @@ class hierarchy():
 		def __initStateVariables(self, size):
 
 			self.__beenTrained = True
-			self.__likelihoods = np.empty(size - 1, dtype=object)
+			self.__likelihoods = np.empty(size - 1, dtype=np.ndarray)
 
-			self.PiVec = np.empty(size, dtype=object)
-			self.PiVec[0] = np.array(1.0)
+			self.PiVec = np.empty(size, dtype=np.ndarray)
+			self.PiVec[0] = np.array([1.0])
 
 		def __getLikelihoods(self, state):
 
@@ -324,7 +329,7 @@ class hierarchy():
 			for i in range(1, self.PiVec.size):
 				self.PiVec[i] = self.PiVec[i-1].dot(self.__likelihoods[i-1])
 
-			return self.PiVec[-1]
+			return self.PiVec[-1].astype(float)/self.PiVec[-1].sum()
 
 		def update(self, s1, a, r, s2):
 
@@ -421,13 +426,13 @@ class deepNSoftmax(deepSoftmax, nStepQL):
 
 class hDeepSoftmax(hierarchy):
 
-	def __init__(self, nStates, nActions, pars, struc=[1]):
+	def __init__(self, nStates, nActions, pars, struc=[]):
 		super(hDeepSoftmax, self).__init__(nStates, nActions, pars, deepSoftmax, struc)
 
 
 class hDeepNSoftmax(hierarchy):
 
-	def __init__(self, nStates, nActions, pars, struc=[1]):
+	def __init__(self, nStates, nActions, pars, struc=[]):
 		super(hDeepNSoftmax, self).__init__(nStates, nActions, pars, deepNSoftmax, struc)
 
 

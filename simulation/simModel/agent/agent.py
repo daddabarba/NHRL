@@ -1,5 +1,5 @@
 import environment as env
-import qLearningAgent as qLA
+import qLearning as qLA
 import sensors
 
 import agentPar as par

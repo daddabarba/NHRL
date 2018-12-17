@@ -55,11 +55,11 @@ class LSTMRL(nn.Module):
             self.linear_layer = linear_layer
 
         if hc_state is None:
-            self.hc_state = (torch.zeros(1,1,rnn_size), torch.zeros(1,1,rnn_size))
+            self.hc_state = (torch.zeros(1, 1, rnn_size), torch.zeros(1, 1, rnn_size))
         else:
             self.hc_state = hc_state
 
-        self.hc_state_temp = (torch.zeros(1,1,rnn_size), torch.zeros(1,1,rnn_size))
+        self.hc_state_temp = (torch.zeros(1, 1, rnn_size), torch.zeros(1, 1, rnn_size))
 
     def __deepcopy__(self, memodict={}):
 
@@ -114,7 +114,7 @@ class LSTM():
         return LSTM(self.input_size, self.rnn_size, self.output_size, self.alpha, copy.deepcopy(self.net))
 
     def state(self):
-        return self.net.hc_state.detach().numpy()[1]
+        return self.net.hc_state[1].detach().numpy()[0][0]
 
     def state_update(self, x=None):
         self.net.state_update(self.toTensor(x))
