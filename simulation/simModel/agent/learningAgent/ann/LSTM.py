@@ -113,8 +113,11 @@ class LSTM():
     def __copy__(self):
         return LSTM(self.input_size, self.rnn_size, self.output_size, self.alpha, copy.deepcopy(self.net))
 
-    def state(self):
-        return self.net.hc_state[1].detach().numpy()[0][0]
+    def state(self, i=1):
+        return self.net.hc_state[i].detach().numpy()[0][0]
+
+    def hcState(self):
+        return self.net.hc_state
 
     def state_update(self, x=None):
         self.net.state_update(self.toTensor(x))

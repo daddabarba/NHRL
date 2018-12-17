@@ -201,7 +201,7 @@ class nStepQL(NeuralQL):
 		self._lambda = self.pars.batchSize
 
 		self.S = np.zeros((self._lambda+1, 1, stateSize))
-		self.states = np.zeros((self._lambda+1, self.pars.rnnSize))
+		self.states = np.zeros(self._lambda+1, dtype=object)
 		self.R = np.zeros(self._lambda+1)
 		self.r_tot = 0
 		self.A = np.zeros(self._lambda+1)
@@ -239,7 +239,7 @@ class nStepQL(NeuralQL):
 			self.r_tot += (self._lambda**self.cnt)*r
 			self.R[self.cnt] += r
 
-			self.states[self.cnt] += self.net.state()
+			self.states[self.cnt] = self.net.hcState()
 			self.net.state_update()
 
 			self.cnt += 1
@@ -248,7 +248,7 @@ class nStepQL(NeuralQL):
 
 			self.S[-1][-1] += (s1 - self.S[-1][-1])
 
-			self.states[self.cnt] += self.net.state()
+			self.states[self.cnt] = self.net.hcState()
 			self.net.state_update()
 
 			with LSTM.State_Set(self.net, self.states[0]):
