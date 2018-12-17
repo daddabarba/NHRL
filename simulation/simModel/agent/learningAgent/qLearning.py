@@ -4,7 +4,6 @@ import vecStats as stats
 import LSTM
 
 import random as rand
-
 import copy
 
 # BASIC ABSTRACT CLASS
@@ -216,7 +215,7 @@ class nStepQL(NeuralQL):
 	def __copy__(self):
 
 		ret = super(nStepQL, self).__copy__()
-		ret.setHistory(copy.deepcopy(self.S), copy.deepcopy(self.states), copy.deepcopy(self.R), r_tot, copy.deepcopy(self.A))
+		ret.setHistory(copy.deepcopy(self.S), copy.deepcopy(self.states), copy.deepcopy(self.R), self.r_tot, copy.deepcopy(self.A))
 
 		return ret
 
@@ -400,11 +399,11 @@ class hierarchy():
 				# Construct new top demon
 				parentDemon = self.demons[0][0].getParent()
 
-				self.demons = np.append(np.empty(1), self.demons)
-				self.demons[0] = np.array([parentDemon])
+				self.demons = np.append(np.empty((1, 1)), self.demons, axis=0)
+				self.demons[0] = np.array([parentDemon], dtype=object)
 
 				# Copy previous top demon
-				self.demons[1] = np.append(self.demons[1], copy.copy(self.demons[1][0]))
+				self.demons[1] = np.append(self.demons[1], np.array([copy.copy(self.demons[1][0])]))
 
 				# Generate new stats
 
