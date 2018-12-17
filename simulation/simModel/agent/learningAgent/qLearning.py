@@ -167,6 +167,9 @@ class NeuralQL(QL):
 
 		return self.__class__(self.nStates, nBrothers, self.pars, newNet)
 
+	def abstractState(self):
+		return self.net.state()
+
 
 # EXPLORATION
 
@@ -343,9 +346,12 @@ class hierarchy():
 			self.__beenTrained = True
 
 			# Update stats of each demon
+
+			state = self.abstractState(s1)
+
 			for i in range(self.stats.size):
-				self.layerUpdateStats(self.stats[i], s1, self.PiVec[i])
-				self.layerStats.update_stats(s1)
+				self.layerUpdateStats(self.stats[i], state, self.PiVec[i])
+				self.layerStats.update_stats(state)
 
 			# Update top policy's stats
 			self.topDemonStats.update_stats(self.PiVec[1])
@@ -353,6 +359,9 @@ class hierarchy():
 			# Action abstraction (if possible)
 			for i in range(1, self.demons.size):
 				self.abstractLayer(self, i, np.array(range(self.demons[i].size)))
+
+		def abstractState(self, s):
+			return np.array(s)
 
 		def actionAbstraction(self, layer, demon):
 
@@ -415,7 +424,6 @@ class deepSoftmax(NeuralQL, Boltzman):
 	def __init__(self, stateSize, nActions, pars, net=None):
 		super(deepSoftmax, self).__init__(stateSize, nActions, pars, net)
 
-
 class deepNSoftmax(deepSoftmax, nStepQL):
 
 	def __init__(self, stateSize, nActions, pars, net=None):
@@ -429,11 +437,17 @@ class hDeepSoftmax(hierarchy):
 	def __init__(self, nStates, nActions, pars, struc=[]):
 		super(hDeepSoftmax, self).__init__(nStates, nActions, pars, deepSoftmax, struc)
 
+	def abstractState(self, s):
+		return self.demons[0][0].abstractState()
+
 
 class hDeepNSoftmax(hierarchy):
 
 	def __init__(self, nStates, nActions, pars, struc=[]):
 		super(hDeepNSoftmax, self).__init__(nStates, nActions, pars, deepNSoftmax, struc)
+
+	def abstractState(self, s):
+		return self.demons[0][0].abstractState()
 
 
 
