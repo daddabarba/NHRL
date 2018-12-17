@@ -165,7 +165,7 @@ class NeuralQL(QL):
 		newNet = copy.copy(self.net)
 		newNet.setMlp(_w, _b)
 
-		return self.__class__(self.nStates, nBrothers, self.pars, newNet)
+		return self.__class__(self.nStates, 2, self.pars, newNet)
 
 	def abstractState(self):
 		return self.net.state()
@@ -363,9 +363,9 @@ class hierarchy():
 		def abstractState(self, s):
 			return np.array(s)
 
-		def actionAbstraction(self, layer, demon):
+		def actionAbstraction(self, layer, demon, override=False):
 
-			if (self.stats[layer][demon].getVar()/self.layerStats.getVa()) > self.pars.SDMax and self.stats[layer][demon].getN()>1:
+			if override or ((self.stats[layer][demon].getVar()/self.layerStats.getVa()) > self.pars.SDMax and self.stats[layer][demon].getN()>1):
 
 				# Abstract policy at layer layer (with index demon)
 
@@ -388,14 +388,14 @@ class hierarchy():
 				if layer == 1:
 					self.topDemonStats.reshape_mean()
 
-		def taskAbstraction(self):
+		def taskAbstraction(self, override=False):
 
 			if (self.topDemonStats.getVar() == 0) or (self.topDemonStats.getN() == 0):
 				return
 
 			norm = np.linalg.norm(self.__likelihoods[0] - self.topDemonStats.getMu()) / self.topDemonStats.getVar()
 
-			if (norm > self.pars.BNBound) and (self.topDemonStats.getN()>1):
+			if override or ((norm > self.pars.BNBound) and (self.topDemonStats.getN()>1)):
 
 				# Construct new top demon
 				parentDemon = self.demons[0][0].getParent()
