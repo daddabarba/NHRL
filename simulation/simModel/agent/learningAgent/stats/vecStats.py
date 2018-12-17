@@ -20,7 +20,7 @@ class Stats():
         self.data[VAR] = var
 
     def __copy__(self):
-        return Stats(self.data[n], copy.deepcopy(self.data[MU]), self.data[VAR])
+        return Stats(self.data[N], copy.deepcopy(self.data[MU]), self.data[VAR])
 
     def reshape_mean(self):
         self.mu = np.append(self.mu, 0.0)
