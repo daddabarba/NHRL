@@ -23,7 +23,7 @@ class Stats():
         return Stats(self.data[N], copy.deepcopy(self.data[MU]), self.data[VAR])
 
     def reshape_mean(self):
-        self.mu = np.append(self.mu, 0.0)
+        self.data[MU] = np.append(self.data[MU], 0.0)
 
     def update_stats(self, newPoint, weight=1.0):
 
