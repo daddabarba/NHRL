@@ -7,6 +7,8 @@ import random as rand
 
 import copy
 
+# BASIC ABSTRACT CLASS
+
 class QL():
 
 	def __init__(self, nStates, nActions, pars):
@@ -54,6 +56,9 @@ class QL():
 
 	def getParent(self):
 		pass
+
+
+# Q FUNCTION REPRESENTATION
 
 class TabularQL(QL):
 
@@ -157,6 +162,9 @@ class NeuralQL(QL):
 
 		return self.__class__(self.nStates, nBrothers, self.pars, newNet)
 
+
+# EXPLORATION
+
 class Boltzman(QL):
 
 	def Pi(self, s):
@@ -173,6 +181,9 @@ class Boltzman(QL):
 		k = rand.random()*0.5 + 0.25
 
 		return a + np.log(1/k), a + np.log((k-1)/k)
+
+
+# EXPLOITATION
 
 class nStepQL(NeuralQL):
 
@@ -244,6 +255,7 @@ class nStepQL(NeuralQL):
 			self.R = np.roll(self.R, -1, axis=0)
 			self.states = np.roll(self.states, -1, axis=0)
 
+# HIERARCHICAL
 
 class hierarchy():
 
@@ -390,6 +402,33 @@ class hierarchy():
 				self.stats[1][0].scale(2.0)
 				self.stats[1] = np.append(self.stats[1], copy.copy(self.stats[1][0]))
 
+
+# MIXTURES
+
+class deepSoftmax(NeuralQL, Boltzman):
+
+	def __init__(self, stateSize, nActions, pars, net=None):
+		super(deepSoftmax, self).__init__(stateSize, nActions, pars, net)
+
+
+class deepNSoftmax(deepSoftmax, nStepQL):
+
+	def __init__(self, stateSize, nActions, pars, net=None):
+		super(deepNSoftmax, self).__init__(stateSize, nActions, pars, net)
+
+
+# CONCRETE HIERARCHIES
+
+class hDeepSoftmax(hierarchy):
+
+	def __init__(self, nStates, nActions, pars, struc=[1]):
+		super(hDeepSoftmax, self).__init__(nStates, nActions, pars, deepSoftmax, struc)
+
+
+class hDeepNSoftmax(hierarchy):
+
+	def __init__(self, nStates, nActions, pars, struc=[1]):
+		super(hDeepNSoftmax, self).__init__(nStates, nActions, pars, deepNSoftmax, struc)
 
 
 
