@@ -30,20 +30,20 @@ if not len(sys.argv)%2:
     print ("wrong argument format")
     sys.exit()
 
-for i in range(1,len(sys.argv)-1,2):
-    runPars(pars,i)
+for i in range(1, len(sys.argv)-1, 2):
+    runPars(pars, i)
 
 if pars.env:
-    a = agent.agent(environment=pars.env, graphic = pars.GUI, suppressPrint=pars.noPrint)
+    a = agent.agent(environment=pars.env, graphic=pars.GUI, suppressPrint=pars.noPrint)
 else:
-    a = agent.agent(graphic = pars.GUI, suppressPrint=pars.noPrint)
+    a = agent.agent(graphic=pars.GUI, suppressPrint=pars.noPrint)
 
 def seqActions():
     nSteps = 1
 
     while nSteps > 0:
         nSteps = defInput("Insert number of steps: ", nSteps)
-        a.nSteps(nSteps,0)
+        a.nSteps(nSteps)
 
 if pars.loop:
     seqActions()

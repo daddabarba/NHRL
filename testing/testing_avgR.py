@@ -92,7 +92,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     for k in range(pars.iterations):
 
-        a.act(0)
+        a.act()
 
         time += 1
         r = a.rewardHistory[0]

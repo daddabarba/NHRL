@@ -102,7 +102,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
         accumulatedReward = 0
 
         while (r != a.livePar.goalReward):
-            a.act(0)
+            a.act()
 
             time += 1
             r = a.rewardHistory[0]
@@ -116,7 +116,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
         it_desc = it_desc+"\t #steps: %d"%time
 
         while(extra_time<pars.visa):
-            a.act(0)
+            a.act()
             extra_time+=1
             r = a.rewardHistory[0]
             if(r == a.livePar.goalReward):
