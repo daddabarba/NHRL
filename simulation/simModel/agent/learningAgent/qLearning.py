@@ -282,13 +282,18 @@ class hierarchy():
 			rep = np.repeat
 
 			# Build hierarchy of policies
-			self.demons = np.array([vecCLS(rep(nStates, struc[i]), rep(struc[i+1], struc[i]), rep(pars, struc[i]))
-										for i in range(len(struc)-1)], dtype=object)
 
-			#Keep track of stats
+			self.demons = np.empty(len(struc)-1, dtype=object)
+			for i in range(len(struc)-1):
+				self.demons[i] = np.array(vecCLS(rep(nStates, struc[i]), rep(struc[i+1], struc[i]), rep(pars, struc[i])))
+
+			# Keep track of stats
 			initStats = np.vectorize(stats.Stats)
 
-			self.stats = np.array([initStats(rep(0.0, struc[i])) for i in range(self.demons.size)], dtype=object)
+			self.stats = np.empty(self.demons.size, dtype=object)
+			for i in range(self.demons.size):
+				self.stats[i] = initStats(rep(0.0, struc[i]))
+
 			self.layerStats = stats.Stats()
 
 			self.topDemonStats = stats.Stats()
@@ -399,7 +404,7 @@ class hierarchy():
 				# Construct new top demon
 				parentDemon = self.demons[0][0].getParent()
 
-				self.demons = np.append(np.empty((1, 1)), self.demons, axis=0)
+				self.demons = np.append(np.empty(1), self.demons)
 				self.demons[0] = np.array([parentDemon], dtype=object)
 
 				# Copy previous top demon
@@ -410,7 +415,7 @@ class hierarchy():
 				self.topDemonStats = stats.Stats(mu=np.array([0.5,0.5]))
 
 				self.stats = np.append(np.empty(1), self.stats)
-				self.stats = np.array([copy.copy(self.stats[1][0])])
+				self.stats[0] = np.array([copy.copy(self.stats[1][0])])
 
 				self.stats[1][0].scale(2.0)
 				self.stats[1] = np.append(self.stats[1], copy.copy(self.stats[1][0]))
