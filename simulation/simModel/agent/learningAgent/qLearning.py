@@ -204,7 +204,7 @@ class nStepQL(NeuralQL):
 		self.states = np.zeros(self._lambda+1, dtype=object)
 		self.R = np.zeros(self._lambda+1)
 		self.r_tot = 0
-		self.A = np.zeros(self._lambda+1)
+		self.A = np.zeros(self._lambda+1, dtype=int)
 
 		self._gamma = self._gamma ** self._lambda
 
@@ -252,7 +252,7 @@ class nStepQL(NeuralQL):
 			self.net.state_update()
 
 			with LSTM.State_Set(self.net, self.states[0]):
-				super(nStepQL, self).update(self.S[0:1], self.A[0], self.R, self.S)
+				super(nStepQL, self).update(self.S[0:1], self.A[0], self.r_tot, self.S)
 
 			self.A[-1] = a
 			self.r_tot = (self.r_tot - self.R[0])*self.remove + self.factor*r
