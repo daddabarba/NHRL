@@ -36,12 +36,13 @@ class agent:
         mes.currentMessage("initializing starting internal state")
         self.currentState = self.perceive(self.problemStateDefinition)        #PARAMETRIZE
         currentGState = self.perceive(self.goalStateDefinition)
-        self.rsSize = 1 if not isinstance(currentGState,list) else len(currentGState)                             #PARAMETRIZE
 
         mes.settingMessage("Action-state values table")
-        #self.qAgent = qLA.hTDWeightBoltzmann(self, len(self.currentState), self.livePar.batchSize, nActions=self.environment.world.numActions, structure=[self.rsSize])
-        #self.qAgent = qLA.hTDBoltzmann(self, len(self.currentState), self.livePar.batchSize, nActions=self.environment.world.numActions, structure=[self.rsSize])
-        self.qAgent = qLA.tdBoltzmann(self, self.rsSize, len(self.currentState), self.environment.world.numActions, self.livePar.batchSize)
+
+        # self.qAgent = qLA.deepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+        # self.qAgent = qLA.deepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+        self.qAgent = qLA.hDeepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+
         mes.setMessage("Action-state values table")
 
         self.graphic = graphic
@@ -50,9 +51,9 @@ class agent:
             mes.currentMessage("initializing render")
             self.environment._initGraph(self.goalStateDefinition)
 
-    def act(self, rs):
+    def act(self):
         mes.currentMessage("selecting action according to current beleived state")
-        action = self.qAgent.policy(self.currentState, rs)
+        action = self.qAgent(self.currentState)
 
         self.actHistory = action
 
@@ -64,36 +65,27 @@ class agent:
         newState = self.perceive(self.problemStateDefinition)  # PARAMETRIZE
 
         mes.message("current problem state: " + str(newState))
-        newGState = self.perceive(self.goalStateDefinition)
+        newGState = self.perceive(self.goalStateDefinition)[-1]
         reward = self.R(newGState)
         self.rewardHistory = reward
 
         mes.currentMessage("Reward:" + str(reward))
 
         mes.currentMessage("learning from previous transition: ")
-        self.qAgent.learn(newState, reward)
+        self.qAgent.update(self.currentState, action, reward, newState)
 
         self.currentState = newState
 
     def R(self, goalDetection):
-        rs = []
 
-        if isinstance(goalDetection, list):
-            for i in goalDetection:
-                if(i):
-                    rs.append((self.livePar).goalReward)
-                else:
-                    rs.append((self.livePar).baseReward)
-        else:
-            if (goalDetection):
-                rs.append((self.livePar).goalReward)
-            else:
-                rs.append((self.livePar).baseReward)
+        if (goalDetection):
+            return (self.livePar).goalReward
 
-        return rs
+        return (self.livePar).baseReward
 
-    def nSteps(self, steps, rs):
-        for i in range(steps): self.act(rs)
+
+    def nSteps(self, steps):
+        for i in range(steps): self.act()
 
     def perceive(self, definition):
         #return (self.environment).currentPerception()
@@ -103,7 +95,7 @@ class agent:
             sens = self.sensors[(self.sensorsNames).index(name)]
             percept += sens((self.environment).interrogateEnvironment, self)
 
-        return list(map(int,percept))
+        return list(map(int, percept))
 
     def mapInternalState(self, sensors):
         return self.environment.world._hashFun(sensors)
