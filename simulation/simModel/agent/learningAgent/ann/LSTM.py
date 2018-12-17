@@ -180,8 +180,8 @@ class LSTM():
 
     def duplicate_output(self, idx):
 
-        self.net.linear_layer.weight = F.pad(self.net.linear_layer.weight, (0, 0, 0, 1))
-        self.net.linear_layer.bias = F.pad(self.net.linear_layer.bias, (0, 1))
+        self.net.linear_layer.weight = torch.nn.Parameter(F.pad(self.net.linear_layer.weight, (0, 0, 0, 1)))
+        self.net.linear_layer.bias = torch.nn.Parameter(F.pad(self.net.linear_layer.bias, (0, 1)))
 
         self.net.linear_layer.weight[-1] += self.net.linear_layer.weight[idx]
         self.net.linear_layer.bias[-1] += self.net.linear_layer.bias[idx]
