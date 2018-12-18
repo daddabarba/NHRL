@@ -116,9 +116,8 @@ class NeuralQL(QL):
 	def __copy__(self):
 		return self.__class__(self.nStates, self.nActions, self.pars, copy.deepcopy(self.net))
 
-	def __call__(self, s):
-
-		ret = super(NeuralQL, self).__call__(s)
+	def Pi(self, s):
+		ret = super(NeuralQL, self).Pi(s)
 
 		self.net.state_update()
 		return ret
