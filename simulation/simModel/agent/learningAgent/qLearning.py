@@ -298,7 +298,7 @@ class hierarchy():
 
         self.layerUpdateStats = np.vectorize(stats.Stats.update_stats, signature='(),(i),()->()', otypes=[stats.Stats])
 
-        self.abstractLayer = np.vectorize(self.actionAbstraction, signature='(),(),()->()', otypes=[hierarchy])
+        self.abstractLayer = np.vectorize(self.actionAbstraction, signature='(),()->()', otypes=[hierarchy])
         self.layerAddAction = np.vectorize(QLCls.addAction, signature='(),()->()', otypes=[QLCls])
 
     def __call__(self, state):
@@ -359,7 +359,7 @@ class hierarchy():
 
         # Action abstraction (if possible)
         for i in range(1, self.demons.size):
-            self.abstractLayer(self, i, np.array(range(self.demons[i].size)))
+            self.abstractLayer(i, np.array(range(self.demons[i].size)))
 
     def abstractState(self, s):
         return np.array(s)
