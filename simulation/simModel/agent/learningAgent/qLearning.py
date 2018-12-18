@@ -30,7 +30,7 @@ class QL():
 		pass
 
 	def Pi(self, s):
-		return (self.Q[s] >= np.max(self.Q[s])) + 0
+		return (self.Q(s) >= np.max(self.Q(s))) + 0
 
 	def U(self, s):
 		return np.dot(self.Pi(s), self.Q(s))
