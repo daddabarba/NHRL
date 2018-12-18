@@ -179,8 +179,7 @@ class Boltzman(QL):
     def biasAction(self, a):
         # Reduce both of ln(2) with a tweak between -0.25 and 0.25 to differentiate them
         k = rand.random() * 0.5 + 0.25
-
-        return a + np.log(1 / k), a + np.log((k - 1) / k)
+        return a + np.log(k), a + np.log(1-k)
 
 
 # EXPLOITATION
@@ -418,6 +417,9 @@ class hierarchy():
 
             self.stats[1][0].scale(2.0)
             self.stats[1] = np.append(self.stats[1], copy.copy(self.stats[1][0]))
+
+    def getLikelihoods(self):
+        return self.__likelihoods
 
 
 # MIXTURES
