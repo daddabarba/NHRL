@@ -367,7 +367,7 @@ class hierarchy():
     def actionAbstraction(self, layer, demon, override=False):
 
         if override or (
-                (self.stats[layer][demon].getVar() / self.layerStats.getVa()) > self.pars.SDMax and self.stats[layer][
+                (self.stats[layer][demon].getVar() / self.layerStats.getVar()) > self.pars.SDMax and self.stats[layer][
             demon].getN() > 1):
 
             # Abstract policy at layer layer (with index demon)
@@ -380,10 +380,6 @@ class hierarchy():
 
             # Demons in higher levels must be aware of new demon at lower layer
             self.layerAddAction(self.demons[layer - 1], demon)
-
-            # Update stats and state variables
-
-            self.__initStateVariables(self.demons.size + 1)
 
             self.stats[layer][demon].scale(2.0)
             self.stats[layer] = np.append(self.stats[layer], copy.copy(self.stats[layer][demon]))
@@ -417,6 +413,9 @@ class hierarchy():
 
             self.stats[1][0].scale(2.0)
             self.stats[1] = np.append(self.stats[1], copy.copy(self.stats[1][0]))
+
+            # Update stats and state variables
+            self.__initStateVariables(self.demons.size + 1)
 
     def getLikelihoods(self):
         return self.__likelihoods
