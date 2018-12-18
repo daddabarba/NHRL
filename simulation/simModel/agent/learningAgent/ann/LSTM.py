@@ -97,7 +97,7 @@ class LSTM():
         else:
             self.net = net
 
-        self.loss_function = nn.MSELoss(reduction='elementwise_mean')
+        self.loss_function = nn.MSELoss(reduction='mean')
         self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
 
     def __call__(self, x):
