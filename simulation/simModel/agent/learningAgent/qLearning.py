@@ -127,7 +127,7 @@ class NeuralQL(QL):
 
 	def update_Q(self, s, a, predicted):
 
-		target = np.zeros(self.nActions)
+		target = np.zeros(self.nActions, dtype=float)
 		target[a] += predicted
 
 		self.net.train(s, target)
@@ -204,12 +204,11 @@ class nStepQL(NeuralQL):
 		self.r_tot = 0
 		self.A = np.zeros(self._lambda+1, dtype=int)
 
+		self.roll = (1.0 / self._gamma)
+		self.factor = self._gamma ** (self._lambda - 1)
 		self._gamma = self._gamma ** self._lambda
 
 		self.cnt = 0
-
-		self.factor = self._gamma ** (self._lambda-1)
-		self.remove = (1 / self._gamma)
 
 	def __copy__(self):
 
@@ -234,7 +233,7 @@ class nStepQL(NeuralQL):
 
 			self.S[self.cnt][-1] += s1
 			self.A[self.cnt] += a
-			self.r_tot += (self._lambda**self.cnt)*r
+			self.r_tot += (self._gamma**self.cnt)*r
 			self.R[self.cnt] += r
 
 			self.states[self.cnt] = self.net.hcState()
@@ -253,7 +252,7 @@ class nStepQL(NeuralQL):
 				super(nStepQL, self).update(self.S[0:1], self.A[0], self.r_tot, self.S)
 
 			self.A[-1] = a
-			self.r_tot = (self.r_tot - self.R[0])*self.remove + self.factor*r
+			self.r_tot = (self.r_tot - self.R[0])*self.roll + self.factor*r
 			self.R[-1] = r
 
 			self.S = np.roll(self.S, -1, axis=0)
