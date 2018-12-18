@@ -315,6 +315,8 @@ class hierarchy():
 		def __initStateVariables(self, size):
 
 			self.__beenTrained = True
+			self.__lastState = None
+
 			self.__likelihoods = np.empty(size - 1, dtype=np.ndarray)
 
 			self.PiVec = np.empty(size, dtype=np.ndarray)
@@ -329,7 +331,11 @@ class hierarchy():
 
 		def Pi(self, state):
 
+			if not self.__beenTrained and self.__lastState==state:
+				return self.PiVec[-1].astype(float)/self.PiVec[-1].sum()
+
 			self.__beenTrained = False
+			self.__lastState = state
 			self.__getLikelihoods(state)
 
 			for i in range(1, self.PiVec.size):
