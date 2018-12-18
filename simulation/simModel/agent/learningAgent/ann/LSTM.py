@@ -127,7 +127,7 @@ class LSTM():
         x = self.toTensor(x)
 
         if not isinstance(y, torch.Tensor):
-            y = torch.Tensor(np.array(y))
+            y = torch.Tensor(y)
 
         if (len(x.shape) != 3) or x.shape[-1]!=self.input_size:
             raise Exception("Wrong input format")
