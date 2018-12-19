@@ -5,7 +5,7 @@ import os
 
 import agent
 
-import qLearningAgent as qLA
+import qLearning as qLA
 
 import pip
 
@@ -95,7 +95,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
         a.act()
 
         time += 1
-        r = a.rewardHistory[0]
+        r = a.rewardHistory
         pR[k] = r
         accumulatedReward += pR[k]
         pM[k] = float(accumulatedReward)/time
