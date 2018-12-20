@@ -138,6 +138,8 @@ class LSTM():
         self.net.zero_grad()
         self.net.detach_state()
 
+        self.optimizer.zero_grad()
+
         out = self.net(x)
         loss = self.loss_function(out, y)
 
