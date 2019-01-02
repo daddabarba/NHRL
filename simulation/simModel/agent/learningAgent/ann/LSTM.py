@@ -65,6 +65,10 @@ class LSTMRL(nn.Module):
 
         return LSTMRL(self.input_size, self.rnn_size, self.output_size, copy.deepcopy(self.linear_layer), copy.deepcopy(self.lstm_layer), copy.deepcopy(self.hc_state))
 
+    def reset_state(self):
+        self.hc_state = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
+        self.hc_state_temp = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
+
     def state_update(self, x=None):
 
         if x is not None:
@@ -136,12 +140,15 @@ class LSTM():
             raise Exception("Wrong target format")
 
         self.net.zero_grad()
-        self.net.detach_state()
+        self.net.reset_state()
+        #self.net.detach_state()
 
         self.optimizer.zero_grad()
 
         out = self.net(x)
         loss = self.loss_function(out, y)
+
+        # print("loss:\t" + str(loss.detach().numpy()))
 
         loss.backward()
         self.optimizer.step()
