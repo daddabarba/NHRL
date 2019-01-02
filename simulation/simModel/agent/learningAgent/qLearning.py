@@ -115,7 +115,7 @@ class NeuralQL(QL):
     def Pi(self, s):
         ret = super(NeuralQL, self).Pi(s)
 
-        self.net.state_update()
+        # self.net.state_update()
         return ret
 
     def Q(self, s):
@@ -123,7 +123,7 @@ class NeuralQL(QL):
 
     def update_Q(self, s, a, predicted):
 
-        target = np.zeros(self.nActions, dtype=float)
+        target = self.Q(s)
         target[a] += predicted
 
         self.net.train(s, target)
@@ -222,6 +222,20 @@ class nStepQL(NeuralQL):
         self.r_tot = r_tot
         self.A = A
 
+    def Pi(self, s):
+
+        if len(s.shape)<2:
+            if self.cnt < self._lambda:
+                sHist = self.S
+                sHist[self.cnt][-1] += s
+            else:
+                sHist = np.roll(self.S, -1, axis=0)
+                sHist[-1][-1] += (s - sHist[-1][-1])
+
+            return super(nStepQL, self).Pi(sHist)
+        else:
+            return super(nStepQL, self).Pi(s)
+
     def update(self, s1, a, r, s2):
 
         # Assume s2 will be s1 in next iteration
@@ -245,8 +259,8 @@ class nStepQL(NeuralQL):
             self.states[self.cnt] = self.net.hcState()
             self.net.state_update()
 
-            with LSTM.State_Set(self.net, self.states[0]):
-                super(nStepQL, self).update(self.S[0:1], self.A[0], self.r_tot, self.S)
+            #with LSTM.State_Set(self.net, self.states[0]):
+            super(nStepQL, self).update(self.S[0:1], self.A[0], self.r_tot, self.S)
 
             self.A[-1] = a
             self.r_tot = (self.r_tot - self.R[0]) * self.roll + self.factor * r
