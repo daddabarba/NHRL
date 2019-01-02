@@ -169,7 +169,11 @@ class NeuralQL(QL):
 
 class Boltzman(QL):
     def Pi(self, s):
-        vals = np.exp(self.Q(s) / self.T())
+
+        exponents = self.Q(s) / self.T()
+        exponents -= np.max(exponents)
+
+        vals = np.exp(exponents)
         return vals / (vals.sum())
 
     def T(self):
