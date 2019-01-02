@@ -139,18 +139,22 @@ class LSTM():
         if (len(y.shape) != 1) or y.shape[-1]!=self.output_size:
             raise Exception("Wrong target format")
 
-        self.net.zero_grad()
         self.net.reset_state()
         #self.net.detach_state()
-
-        self.optimizer.zero_grad()
 
         out = self.net(x)
         loss = self.loss_function(out, y)
 
         # print("loss:\t" + str(loss.detach().numpy()))
 
+        self.optimizer.zero_grad()
+        self.net.zero_grad()
+
         loss.backward()
+
+        for param in self.net.parameters():
+            param.grad.data.clamp_(-1, 1)
+
         self.optimizer.step()
 
         return loss
