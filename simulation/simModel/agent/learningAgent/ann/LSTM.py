@@ -101,7 +101,8 @@ class LSTM():
         else:
             self.net = net
 
-        self.loss_function = nn.MSELoss(reduction='mean')
+        self.loss_function = F.smooth_l1_loss
+        # self.loss_function = nn.MSELoss(reduction='mean')
         self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
 
     def __call__(self, x):
@@ -139,13 +140,15 @@ class LSTM():
         if (len(y.shape) != 1) or y.shape[-1]!=self.output_size:
             raise Exception("Wrong target format")
 
-        self.net.reset_state()
-        #self.net.detach_state()
+        # self.net.reset_state()
+        # self.net.detach_state()
 
         out = self.net(x)
         loss = self.loss_function(out, y)
 
         # print("loss:\t" + str(loss.detach().numpy()))
+        # print("out: " + str(out.detach().numpy()) + "\t y: " + str(y.detach().numpy()))
+        # print((out == y).detach().numpy().sum() == 3)
 
         self.optimizer.zero_grad()
         self.net.zero_grad()
