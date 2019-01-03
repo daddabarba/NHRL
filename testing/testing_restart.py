@@ -17,6 +17,8 @@ if asPlotPkg:
 graphic = False
 printSupp = True
 
+MAX = 1000
+
 class SysPars():
     def __init__(self):
         self.name = None
@@ -101,7 +103,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
         r = a.livePar.baseReward
         accumulatedReward = 0
 
-        while (r != a.livePar.goalReward):
+        while (r != a.livePar.goalReward) and (time < MAX):
             a.act()
 
             time += 1
@@ -115,7 +117,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
         it_desc = it_desc+"\t #steps: %d"%time
 
-        while(extra_time<pars.visa):
+        while(extra_time<pars.visa) and (time < MAX):
             a.act()
             extra_time+=1
             r = a.rewardHistory
