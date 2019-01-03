@@ -101,10 +101,10 @@ class LSTM():
         else:
             self.net = net
 
-        self.loss_function = lambda out, target : F.smooth_l1_loss(out, target) -  \
-                                                  (self.net.linear_layer.weight.detach().numpy()**2).sum() #-\
-                                                  #(self.net.lstm_layer.weight_hh_l0.detach().numpy()**2).sum() - \
-                                                  #(self.net.lstm_layer.weight_ih_l0.detach().numpy() ** 2).sum()
+        self.loss_function = lambda out, target : F.smooth_l1_loss(out, target) +  \
+                                                  (self.net.linear_layer.weight.detach().numpy()**2).sum() +\
+                                                  (self.net.lstm_layer.weight_hh_l0.detach().numpy()**2).sum() + \
+                                                  (self.net.lstm_layer.weight_ih_l0.detach().numpy() ** 2).sum()
         # self.loss_function = F.smooth_l1_loss
         # self.loss_function = nn.MSELoss(reduction='mean')
         self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
@@ -150,7 +150,7 @@ class LSTM():
         out = self.net(x)
         loss = self.loss_function(out, y)
 
-        # print("loss:\t" + str(loss.detach().numpy()))
+        print("loss:\t" + str(loss.detach().numpy()))
         # print("out: " + str(out.detach().numpy()) + "\t y: " + str(y.detach().numpy()))
         # print((out == y).detach().numpy().sum() == 3)
 
