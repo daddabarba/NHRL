@@ -101,7 +101,11 @@ class LSTM():
         else:
             self.net = net
 
-        self.loss_function = F.smooth_l1_loss
+        self.loss_function = lambda out, target : F.smooth_l1_loss(out, target) -  \
+                                                  (self.net.linear_layer.weight.detach().numpy()**2).sum() #-\
+                                                  #(self.net.lstm_layer.weight_hh_l0.detach().numpy()**2).sum() - \
+                                                  #(self.net.lstm_layer.weight_ih_l0.detach().numpy() ** 2).sum()
+        # self.loss_function = F.smooth_l1_loss
         # self.loss_function = nn.MSELoss(reduction='mean')
         self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
 
@@ -154,9 +158,6 @@ class LSTM():
         self.net.zero_grad()
 
         loss.backward()
-
-        for param in self.net.parameters():
-            param.grad.data.clamp_(-1, 1)
 
         self.optimizer.step()
 
