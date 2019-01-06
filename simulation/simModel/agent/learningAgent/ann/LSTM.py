@@ -84,7 +84,7 @@ class LSTMRL(nn.Module):
         out_rnn, self.hc_state_temp = self.lstm_layer(x, self.hc_state)
         out_linear = self.linear_layer(out_rnn)
 
-        return out_linear[-1][-1]
+        return out_linear.view(out_linear.shape[0], -1)
 
 class LSTM():
 
@@ -114,7 +114,7 @@ class LSTM():
         with torch.no_grad():
             out = self.net(self.toTensor(x))
 
-        return out.detach().numpy()
+        return out[-1].detach().numpy()
 
     def __deepcopy__(self, memodict={}):
         return copy.copy(self)
@@ -144,24 +144,25 @@ class LSTM():
         if (len(y.shape) != 1) or y.shape[-1]!=self.output_size:
             raise Exception("Wrong target format")
 
-        # self.net.reset_state()
+        # self.optimizer.zero_grad()
+        self.net.zero_grad()
+
+        self.net.reset_state()
         # self.net.detach_state()
 
         out = self.net(x)
+
         loss = self.loss_function(out, y)
 
-        print("loss:\t" + str(loss.detach().numpy()))
+        # print("loss:\t" + str(loss.detach().numpy()))
         # print("out: " + str(out.detach().numpy()) + "\t y: " + str(y.detach().numpy()))
         # print((out == y).detach().numpy().sum() == 3)
-
-        self.optimizer.zero_grad()
-        self.net.zero_grad()
 
         loss.backward()
 
         self.optimizer.step()
 
-        return loss
+        return loss.detach().numpy()
 
     def toTensor(self, x):
 
