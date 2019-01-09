@@ -82,13 +82,13 @@ class LSTMRL(nn.Module):
     def forward(self, x):
 
         out_rnn, self.hc_state_temp = self.lstm_layer(x, self.hc_state)
-        out_linear = self.linear_layer(out_rnn)
+        out_linear = self.linear_layer(out_rnn.view(out_rnn.shape[0], -1))
 
-        return out_linear.view(out_linear.shape[0], -1)
+        return out_linear
 
 class LSTM():
 
-    def __init__(self, input_size, rnn_size, output_size, alpha=0.99, net=None):
+    def __init__(self, input_size, rnn_size, output_size, alpha=0.1, net=None):
 
         self.input_size = input_size
         self.rnn_size = rnn_size
@@ -101,13 +101,20 @@ class LSTM():
         else:
             self.net = net
 
-        self.loss_function = lambda out, target : F.smooth_l1_loss(out, target) +  \
-                                                  (self.net.linear_layer.weight.detach().numpy()**2).sum() +\
-                                                  (self.net.lstm_layer.weight_hh_l0.detach().numpy()**2).sum() + \
-                                                  (self.net.lstm_layer.weight_ih_l0.detach().numpy() ** 2).sum()
+        # self.loss_function = lambda out, target : F.smooth_l1_loss(out, target) # +  \
+                                                  # (self.net.linear_layer.weight.detach().numpy()**2).sum() +\
+                                                  # (self.net.lstm_layer.weight_hh_l0.detach().numpy()**2).sum() + \
+                                                  # (self.net.lstm_layer.weight_ih_l0.detach().numpy() ** 2).sum()
         # self.loss_function = F.smooth_l1_loss
-        # self.loss_function = nn.MSELoss(reduction='mean')
-        self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
+        self.loss_function = nn.MSELoss(reduction='mean')
+
+        # self.loss_function = lambda out, target : nn.MSELoss(reduction='mean')(out, target)  +  \
+                                                  # (self.net.linear_layer.weight.detach().numpy()**2).sum() # +\
+                                                  # (self.net.lstm_layer.weight_hh_l0.detach().numpy()**2).sum() + \
+                                                  # (self.net.lstm_layer.weight_ih_l0.detach().numpy() ** 2).sum()
+
+        # self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
+        self.optimizer = optim.RMSprop(self.net.parameters(), lr=alpha)
 
     def __call__(self, x):
 
@@ -133,7 +140,8 @@ class LSTM():
 
     def train(self, x, y):
 
-        x = self.toTensor(x)
+        #x = self.toTensor(x)
+        x = torch.Tensor(x)
 
         if not isinstance(y, torch.Tensor):
             y = torch.Tensor(y)
@@ -144,19 +152,22 @@ class LSTM():
         if (len(y.shape) != 1) or y.shape[-1]!=self.output_size:
             raise Exception("Wrong target format")
 
-        # self.optimizer.zero_grad()
         self.net.zero_grad()
-
         self.net.reset_state()
+
         # self.net.detach_state()
 
-        out = self.net(x)
+        out = self.net(x)[-1]
+
+        # print("out: %s\tout[-1]:%s\ty:%s"%(str(out), str(out[-1]), str(y)))
 
         loss = self.loss_function(out, y)
 
         # print("loss:\t" + str(loss.detach().numpy()))
         # print("out: " + str(out.detach().numpy()) + "\t y: " + str(y.detach().numpy()))
         # print((out == y).detach().numpy().sum() == 3)
+
+        self.optimizer.zero_grad()
 
         loss.backward()
 
