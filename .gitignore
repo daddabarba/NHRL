@@ -3,3 +3,4 @@
 __pycache__/*
 import_dir/*
 **version**
+testing/tests/*
