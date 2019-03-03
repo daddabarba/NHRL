@@ -138,7 +138,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
     if issubclass(type(a.qAgent), qLA.hierarchy):
         fileTopology = open(path + 'hierarchyTopology.txt', 'w')
-        fileTopology.write(a.qAgent.printHierarchy())
+        # fileTopology.write(a.qAgent.printHierarchy())
         fileTopology.close()
 
     fileR.close()

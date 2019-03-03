@@ -17,14 +17,13 @@ if asPlotPkg:
 graphic = False
 printSupp = True
 
-MAX = 1000
-
 class SysPars():
     def __init__(self):
         self.name = None
         self.nExperiments = None
         self.iterations = None
         self.visa = None
+        self.lim = None
         self.mazeName = None
         self.parsFile = None
         self.origin = None
@@ -40,6 +39,8 @@ def runPars(pars,i):
         pars.iterations = int((sys.argv)[i + 1])
     elif (sys.argv)[i] == "v":
         pars.visa = int((sys.argv)[i + 1])
+    elif (sys.argv)[i] == "lim":
+        pars.lim = int((sys.argv)[i + 1])
     elif (sys.argv)[i] == "maze":
         pars.mazeName = "maze.txt" if (sys.argv)[i + 1]=="def" else (sys.argv)[i + 1]
     elif (sys.argv)[i] == "pars":
@@ -49,6 +50,7 @@ def runPars(pars,i):
 
 _defIter = 60
 _defVisa = 1
+_defLim = 500
 _testDirPath = 'tests/'
 
 
@@ -80,6 +82,9 @@ if not pars.iterations :
 if not pars.visa :
     pars.visa = defInput("Insert visa value (extra time after goal is found): ", _defVisa)
 
+if not pars.lim :
+    pars.lim = defInput("Insert t-setp limit: ", _defLim)
+
 if not pars.mazeName:
     pars.mazeName = defInput("Insert maze name: ", "maze.txt", string=True)
 
@@ -90,6 +95,8 @@ while (os.path.exists(_testDirPath + '_' + str(testN))):
 for testNIter in range(testN,testN+pars.nExperiments):
 
     a = agent.agent(environment = "../simulation/files/" + str(pars.mazeName), pars=pars.parsFile, graphic=graphic, suppressPrint=printSupp)
+
+    first = True
 
     pT = []
     pR = []
@@ -103,7 +110,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
         r = a.livePar.baseReward
         accumulatedReward = 0
 
-        while (r != a.livePar.goalReward) and (time < MAX):
+        while (r != a.livePar.goalReward) and (first or time < pars.lim):
             a.act()
 
             time += 1
@@ -112,12 +119,14 @@ for testNIter in range(testN,testN+pars.nExperiments):
 
             print(it_desc+"\t #steps: %d\r"%time, end="")
 
+        first = False
+
         extra_time = 1
         good_use = 0
 
         it_desc = it_desc+"\t #steps: %d"%time
 
-        while(extra_time<pars.visa) and (time < MAX):
+        while extra_time<pars.visa:
             a.act()
             extra_time+=1
             r = a.rewardHistory
