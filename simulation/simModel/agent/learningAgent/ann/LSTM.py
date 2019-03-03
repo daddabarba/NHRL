@@ -82,7 +82,7 @@ class LSTMRL(nn.Module):
     def forward(self, x):
 
         out_rnn, self.hc_state_temp = self.lstm_layer(x, self.hc_state)
-        out_linear = self.linear_layer(out_rnn.view(out_rnn.shape[0], -1))
+        out_linear = self.linear_layer(torch.sigmoid(out_rnn.view(out_rnn.shape[0], -1)))
 
         return out_linear
 
@@ -113,8 +113,8 @@ class LSTM():
                                                   # (self.net.lstm_layer.weight_hh_l0.detach().numpy()**2).sum() + \
                                                   # (self.net.lstm_layer.weight_ih_l0.detach().numpy() ** 2).sum()
 
-        # self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
-        self.optimizer = optim.RMSprop(self.net.parameters(), lr=alpha)
+        self.optimizer = optim.SGD(self.net.parameters(), lr=alpha)
+        # self.optimizer = optim.RMSprop(self.net.parameters(), lr=alpha)
 
     def __call__(self, x):
 
@@ -140,7 +140,9 @@ class LSTM():
 
     def train(self, x, y):
 
-        #x = self.toTensor(x)
+        if len(np.shape(x)) == 1:
+            x = np.array([[x]])
+
         x = torch.Tensor(x)
 
         if not isinstance(y, torch.Tensor):
@@ -163,7 +165,7 @@ class LSTM():
 
         loss = self.loss_function(out, y)
 
-        # print("loss:\t" + str(loss.detach().numpy()))
+        print("loss:\t" + str(loss.detach().numpy()))
         # print("out: " + str(out.detach().numpy()) + "\t y: " + str(y.detach().numpy()))
         # print((out == y).detach().numpy().sum() == 3)
 
@@ -214,3 +216,37 @@ class LSTM():
 
         self.net.linear_layer.weight[-1] += self.net.linear_layer.weight[idx]
         self.net.linear_layer.bias[-1] += self.net.linear_layer.bias[idx]
+
+
+
+class QL_LSTM(LSTM):
+
+    def __init__(self, input_size, rnn_size, output_size, alpha=0.1, net=None):
+        super(QL_LSTM, self).__init__(input_size, rnn_size, output_size, alpha, net)
+
+        self.loss_function = lambda s1, a, predicted: (predicted - self.net(s1)[-1][a])**2
+
+    def train(self, s1, a, predicted):
+
+        if len(np.shape(s1)) == 1:
+            s1 = np.array([[s1]])
+
+        s1 = torch.Tensor(s1)
+
+        self.net.zero_grad()
+        self.net.reset_state()
+
+        # print("out: %s\tout[-1]:%s\ty:%s"%(str(out), str(out[-1]), str(y)))
+
+        loss = self.loss_function(s1, a, predicted)
+
+        # print("loss:\t" + str(loss.detach().numpy()))
+        # print("out: " + str(out.detach().numpy()) + "\t y: " + str(y.detach().numpy()))
+        # print((out == y).detach().numpy().sum() == 3)
+
+        self.optimizer.zero_grad()
+
+        loss.backward()
+        self.optimizer.step()
+
+        return loss.detach().numpy()

@@ -105,28 +105,18 @@ class NeuralQL(QL):
         super(NeuralQL, self).__init__(stateSize, nActions, pars)
 
         if net is None:
-            self.net = LSTM.LSTM(stateSize, self.pars.rnnSize, nActions)
+            self.net = LSTM.QL_LSTM(stateSize, self.pars.rnnSize, nActions, self._alpha)
         else:
             self.net = net
 
     def __copy__(self):
         return self.__class__(self.nStates, self.nActions, self.pars, copy.deepcopy(self.net))
 
-    def Pi(self, s):
-        ret = super(NeuralQL, self).Pi(s)
-
-        # self.net.state_update()
-        return ret
-
     def Q(self, s):
         return self.net(s)
 
     def update_Q(self, s, a, predicted):
-
-        target = self.Q(s)
-        target[a] += predicted
-
-        self.net.train(s, target)
+        self.net.train(s, a, predicted)
 
     def addAction(self, i=0):
         super(NeuralQL, self).addAction(i)
@@ -223,6 +213,8 @@ class nStepQL(NeuralQL):
         self.A = A
 
     def Pi(self, s):
+
+        s = np.array(s)
 
         if len(s.shape)<2:
             if self.cnt < self._lambda:
