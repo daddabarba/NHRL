@@ -110,7 +110,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
         r = a.livePar.baseReward
         accumulatedReward = 0
 
-        while (r != a.livePar.goalReward) and (first or time < pars.lim):
+        while (r != a.livePar.goalReward) and (first or time.lim == False or time < pars.lim):
             a.act()
 
             time += 1
