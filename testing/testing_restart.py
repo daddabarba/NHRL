@@ -40,7 +40,10 @@ def runPars(pars,i):
     elif (sys.argv)[i] == "v":
         pars.visa = int((sys.argv)[i + 1])
     elif (sys.argv)[i] == "lim":
-        pars.lim = int((sys.argv)[i + 1])
+        if (sys.argv)[i+1] != "False":
+            pars.lim = int((sys.argv)[i + 1])
+        else:
+            pars.lim = False
     elif (sys.argv)[i] == "maze":
         pars.mazeName = "maze.txt" if (sys.argv)[i + 1]=="def" else (sys.argv)[i + 1]
     elif (sys.argv)[i] == "pars":
@@ -73,16 +76,16 @@ if not pars.name:
 dirName = "_".join((pars.name).split())
 _testDirPath+=dirName
 
-if not pars.nExperiments:
+if pars.nExperiments == None:
     pars.nExperiments = defInput("Insert number of experiments: ", 1)
 
-if not pars.iterations :
+if pars.iterations == None :
     pars.iterations = defInput("Insert number of iterations: ", _defIter)
 
-if not pars.visa :
+if pars.visa == None :
     pars.visa = defInput("Insert visa value (extra time after goal is found): ", _defVisa)
 
-if not pars.lim :
+if pars.lim == None :
     pars.lim = defInput("Insert t-setp limit: ", _defLim)
 
 if not pars.mazeName:
@@ -110,7 +113,7 @@ for testNIter in range(testN,testN+pars.nExperiments):
         r = a.livePar.baseReward
         accumulatedReward = 0
 
-        while (r != a.livePar.goalReward) and (first or time.lim == False or time < pars.lim):
+        while (r != a.livePar.goalReward) and (first or pars.lim == False or time < pars.lim):
             a.act()
 
             time += 1

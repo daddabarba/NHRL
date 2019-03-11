@@ -65,26 +65,26 @@ class LSTMRL(nn.Module):
 
         return LSTMRL(self.input_size, self.rnn_size, self.output_size, copy.deepcopy(self.linear_layer), copy.deepcopy(self.lstm_layer), copy.deepcopy(self.hc_state))
 
-    def reset_state(self):
-        self.hc_state = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
-        self.hc_state_temp = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
+    # def reset_state(self):
+        # self.hc_state = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
+        # self.hc_state_temp = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
 
-    def state_update(self, x=None):
+    # def state_update(self, x=None):
 
-        if x is not None:
-            self.forward(x)
+        # if x is not None:
+            # self.forward(x)
 
-        self.hc_state = self.hc_state_temp
+        # self.hc_state = self.hc_state_temp
 
     def detach_state(self):
         self.hc_state = (self.hc_state[0].detach(), self.hc_state[1].detach())
 
     def forward(self, x):
 
-        out_rnn, self.hc_state_temp = self.lstm_layer(x, self.hc_state)
-        out_linear = self.linear_layer(torch.sigmoid(out_rnn.view(out_rnn.shape[0], -1)))
+        out_rnn, self.hc_state_temp = self.lstm_layer(x, (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size)))
+        out_linear = self.linear_layer(torch.sigmoid(out_rnn[-1]))
 
-        return out_linear
+        return out_linear[-1]
 
 class LSTM():
 
@@ -118,10 +118,7 @@ class LSTM():
 
     def __call__(self, x):
 
-        with torch.no_grad():
-            out = self.net(self.toTensor(x))
-
-        return out[-1].detach().numpy()
+        return self.net(self.toTensor(x))
 
     def __deepcopy__(self, memodict={}):
         return copy.copy(self)
@@ -155,11 +152,11 @@ class LSTM():
             raise Exception("Wrong target format")
 
         self.net.zero_grad()
-        self.net.reset_state()
+        # self.net.reset_state()
 
         # self.net.detach_state()
 
-        out = self.net(x)[-1]
+        out = self.net(x)
 
         # print("out: %s\tout[-1]:%s\ty:%s"%(str(out), str(out[-1]), str(y)))
 
@@ -224,29 +221,32 @@ class QL_LSTM(LSTM):
     def __init__(self, input_size, rnn_size, output_size, alpha=0.1, net=None):
         super(QL_LSTM, self).__init__(input_size, rnn_size, output_size, alpha, net)
 
-        self.loss_function = lambda s1, a, predicted: (predicted - self.net(s1)[-1][a])**2
+        self.loss_function = lambda s1, a, predicted: (predicted - self.net(s1)[a])**2
 
     def train(self, s1, a, predicted):
+
 
         if len(np.shape(s1)) == 1:
             s1 = np.array([[s1]])
 
         s1 = torch.Tensor(s1)
 
-        self.net.zero_grad()
-        self.net.reset_state()
-
         # print("out: %s\tout[-1]:%s\ty:%s"%(str(out), str(out[-1]), str(y)))
 
         loss = self.loss_function(s1, a, predicted)
 
-        # print("loss:\t" + str(loss.detach().numpy()))
+        # print("predicted: " + str(predicted) + "\tgot: " + str(self.net(s1)[a]) + "\tloss: " + str(loss))
+
         # print("out: " + str(out.detach().numpy()) + "\t y: " + str(y.detach().numpy()))
         # print((out == y).detach().numpy().sum() == 3)
 
-        self.optimizer.zero_grad()
-
         loss.backward()
         self.optimizer.step()
+
+        self.optimizer.zero_grad()
+        self.net.zero_grad()
+        # self.net.reset_state()
+
+        print("loss:\t" + str(loss.detach().numpy()))
 
         return loss.detach().numpy()

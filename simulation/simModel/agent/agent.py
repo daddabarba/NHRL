@@ -39,7 +39,7 @@ class agent:
 
         mes.settingMessage("Action-state values table")
 
-        #self.qAgent = qLA.deepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+        # self.qAgent = qLA.deepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
         self.qAgent = qLA.deepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
         # self.qAgent = qLA.hDeepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
 

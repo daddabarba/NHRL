@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 import vecStats as stats
 import LSTM
@@ -23,7 +24,13 @@ class QL():
         pass
 
     def __call__(self, s):
-        return np.random.choice(self.nActions, p=self.Pi(s))
+
+        pDist = self.Pi(s).detach().numpy()
+
+        if isinstance(pDist, torch.Tensor):
+            pDist = pDist.detach().numpy()
+
+        return np.random.choice(self.nActions, p=pDist)
 
     def Q(self, s):
         pass
@@ -32,17 +39,18 @@ class QL():
         return (self.Q(s) >= np.max(self.Q(s))) + 0
 
     def U(self, s):
-        return np.dot(self.Pi(s), self.Q(s))
+        return torch.dot(self.Pi(s), self.Q(s))
 
     def update(self, s1, a, r, s2):
+
         utility_approx = r + self._gamma * self.U(s2)
 
-        memory = self._alpha * self.Q(s1)[a]
-        update = (1 - self._alpha) * utility_approx
+        memory = self.Q(s1)[a]
+        update = utility_approx
 
-        self.update_Q(s1, a, memory + update)
+        self.update_Q(s1, a, memory, update)
 
-    def update_Q(self, s, a, predicted):
+    def update_Q(self, s, a, memory, update):
         pass
 
     def addAction(self, i=0):
@@ -73,8 +81,8 @@ class TabularQL(QL):
     def Q(self, s):
         return self.table[s]
 
-    def update_Q(self, s, a, predicted):
-        self.Q[s][a] = predicted
+    def update_Q(self, s, a, memory, update):
+        self.Q[s][a] = self._alpha*memory + (1-self._alpha)*update
 
     def addAction(self, i=0):
         super(TabularQL, self).addAction(i)
@@ -115,8 +123,8 @@ class NeuralQL(QL):
     def Q(self, s):
         return self.net(s)
 
-    def update_Q(self, s, a, predicted):
-        self.net.train(s, a, predicted)
+    def update_Q(self, s, a, memory, update):
+        self.net.train(s, a, update)
 
     def addAction(self, i=0):
         super(NeuralQL, self).addAction(i)
@@ -161,10 +169,12 @@ class Boltzman(QL):
     def Pi(self, s):
 
         exponents = self.Q(s) / self.T()
-        exponents -= np.max(exponents)
+        exponents = exponents - torch.max(exponents)
 
-        vals = np.exp(exponents)
-        return vals / (vals.sum())
+        vals = torch.exp(exponents)
+        pDist = vals / (vals.sum())
+
+        return pDist
 
     def T(self):
         t = self.pars.startPoint - self.pars.speed * self.pars.time
@@ -177,15 +187,23 @@ class Boltzman(QL):
 
 
 # EXPLOITATION
+class storeTransition:
+
+    def __init__(self, s1, a, r, s2):
+        self.s1 = s1
+        self.a = a
+        self.r = r
+        self.s2 = s2
 
 class nStepQL(NeuralQL):
+
     def __init__(self, stateSize, nActions, pars, net=None):
         super(nStepQL, self).__init__(stateSize, nActions, pars, net)
 
         self._lambda = self.pars.batchSize
 
         self.S = np.zeros((self._lambda + 1, 1, stateSize))
-        self.states = np.zeros(self._lambda + 1, dtype=object)
+        #self.states = np.zeros(self._lambda + 1, dtype=object)
         self.R = np.zeros(self._lambda + 1)
         self.r_tot = 0
         self.A = np.zeros(self._lambda + 1, dtype=int)
@@ -195,11 +213,12 @@ class nStepQL(NeuralQL):
         self._gamma = self._gamma ** self._lambda
 
         self.cnt = 0
+        self.tr = None
 
     def __copy__(self):
 
         ret = super(nStepQL, self).__copy__()
-        ret.setHistory(copy.deepcopy(self.S), copy.deepcopy(self.states), copy.deepcopy(self.R), self.r_tot,
+        ret.setHistory(copy.deepcopy(self.S), copy.deepcopy(self.R), self.r_tot,
                        copy.deepcopy(self.A))
 
         return ret
@@ -207,26 +226,10 @@ class nStepQL(NeuralQL):
     def setHistory(self, S, states, R, r_tot, A):
 
         self.S = S
-        self.states = states
+        #self.states = states
         self.R = R
         self.r_tot = r_tot
         self.A = A
-
-    def Pi(self, s):
-
-        s = np.array(s)
-
-        if len(s.shape)<2:
-            if self.cnt < self._lambda:
-                sHist = self.S
-                sHist[self.cnt][-1] += s
-            else:
-                sHist = np.roll(self.S, -1, axis=0)
-                sHist[-1][-1] += (s - sHist[-1][-1])
-
-            return super(nStepQL, self).Pi(sHist)
-        else:
-            return super(nStepQL, self).Pi(s)
 
     def update(self, s1, a, r, s2):
 
@@ -239,8 +242,8 @@ class nStepQL(NeuralQL):
             self.r_tot += (self._gamma ** self.cnt) * r
             self.R[self.cnt] += r
 
-            self.states[self.cnt] = self.net.hcState()
-            self.net.state_update()
+            # self.states[self.cnt] = self.net.hcState()
+            # self.net.state_update()
 
             self.cnt += 1
 
@@ -248,11 +251,13 @@ class nStepQL(NeuralQL):
 
             self.S[-1][-1] += (s1 - self.S[-1][-1])
 
-            self.states[self.cnt] = self.net.hcState()
-            self.net.state_update()
+            # self.states[self.cnt] = self.net.hcState()
+            # self.net.state_update()
+
+
 
             #with LSTM.State_Set(self.net, self.states[0]):
-            super(nStepQL, self).update(self.S[0:1], self.A[0], self.r_tot, self.S)
+            super(nStepQL, self).update(self.tr.s1, self.tr.a, self.tr.r, self.tr.s2)
 
             self.A[-1] = a
             self.r_tot = (self.r_tot - self.R[0]) * self.roll + self.factor * r
@@ -261,7 +266,11 @@ class nStepQL(NeuralQL):
             self.S = np.roll(self.S, -1, axis=0)
             self.A = np.roll(self.A, -1, axis=0)
             self.R = np.roll(self.R, -1, axis=0)
-            self.states = np.roll(self.states, -1, axis=0)
+
+
+            # self.states = np.roll(self.states, -1, axis=0)
+
+        self.tr = storeTransition(copy.deepcopy(s1), a, r, copy.deepcopy(s2))
 
 
 # HIERARCHICAL

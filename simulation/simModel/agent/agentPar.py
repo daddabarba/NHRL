@@ -26,7 +26,7 @@ _defDiscountFactor = 0.98
 
 _defNeuralLearningRate = -1
 
-_defBatchSize = 80
+_defBatchSize = 1
 
 _defSDMax = 0.9
 _defBNBound = 3.0
