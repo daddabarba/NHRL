@@ -25,7 +25,7 @@ class QL():
 
     def __call__(self, s):
 
-        pDist = self.Pi(s).detach().numpy()
+        pDist = self.Pi(s)
 
         if isinstance(pDist, torch.Tensor):
             pDist = pDist.detach().numpy()
@@ -36,21 +36,27 @@ class QL():
         pass
 
     def Pi(self, s):
-        return (self.Q(s) >= np.max(self.Q(s))) + 0
+        pDist = torch.zeros(self.nActions)
+        pDist[torch.argmax(self.Q(s))] = 1.0
+        return pDist
 
     def U(self, s):
         return torch.dot(self.Pi(s), self.Q(s))
 
     def update(self, s1, a, r, s2):
+        print("ACTUAL: ")
+        print("for: " + str(s1) + " -(" + str(a) + "," + str(r) + ")-> " + str(s2))
+        print("Q(s1,a): " + str(self.Q(s1)[a]))
+        print("update = " + str(r) + "+ " + str(self._gamma) + "*" + str(self.U(s2)) + " = " + str(r+self._gamma*self.U(s2)))
+        print("where U(s) = " + str(self.Pi(s2)) + " * " + str(self.Q(s2)))
+        print("with error: " + str((self.Q(s1)[a] - (+self._gamma*self.U(s2)))**2))
+        print(" ")
 
-        utility_approx = r + self._gamma * self.U(s2)
+        update = r + self._gamma * self.U(s2)
 
-        memory = self.Q(s1)[a]
-        update = utility_approx
+        self.update_Q(s1, a, update)
 
-        self.update_Q(s1, a, memory, update)
-
-    def update_Q(self, s, a, memory, update):
+    def update_Q(self, s, a, update):
         pass
 
     def addAction(self, i=0):
@@ -81,18 +87,18 @@ class TabularQL(QL):
     def Q(self, s):
         return self.table[s]
 
-    def update_Q(self, s, a, memory, update):
-        self.Q[s][a] = self._alpha*memory + (1-self._alpha)*update
+    def update_Q(self, s, a, update):
+        self.table[s][a] = self._alpha*self.Q(s)[a] + (1-self._alpha)*update
 
     def addAction(self, i=0):
         super(TabularQL, self).addAction(i)
-        self.Q = np.hstack((self.Q, self.Q[:, i:(i + 1)]))
+        self.table = np.hstack((self.Q, self.Q[:, i:(i + 1)]))
 
-        tweaked = self.biasAction(self.Q[i])
+        tweaked = self.biasAction(self.Q(i))
 
         if tweaked is not None:
-            self.Q[i] = tweaked[0]
-            self.Q[-1] = tweaked[1]
+            self.table[i] = tweaked[0]
+            self.table[-1] = tweaked[1]
 
     def getParent(self):
 
@@ -107,6 +113,13 @@ class TabularQL(QL):
 
         return self.__class__(self.nStates, nBrothers, self.pars, parentTable)
 
+class storeTransition:
+
+    def __init__(self, s1, a, r, s2):
+        self.s1 = s1
+        self.a = a
+        self.r = r
+        self.s2 = s2
 
 class NeuralQL(QL):
     def __init__(self, stateSize, nActions, pars, net=None):
@@ -117,13 +130,31 @@ class NeuralQL(QL):
         else:
             self.net = net
 
+        self.tr = None
+
     def __copy__(self):
         return self.__class__(self.nStates, self.nActions, self.pars, copy.deepcopy(self.net))
 
     def Q(self, s):
         return self.net(s)
 
-    def update_Q(self, s, a, memory, update):
+    def update(self, s1, a, r, s2):
+
+        print("CURRENT: ")
+        print("for: " + str(s1) + " -(" + str(a) + "," + str(r) + ")-> " + str(s2))
+        print("Q(s1,a): " + str(self.Q(s1)[a]))
+        print("update = " + str(r) + "+ " + str(self._gamma) + "*" + str(self.U(s2)) + " = " + str(r + self._gamma * self.U(s2)))
+        print("where U(s) = " + str(self.Pi(s2)) + " * " + str(self.Q(s2)))
+        print("with error: " + str((self.Q(s1)[a] - (+self._gamma * self.U(s2))) ** 2))
+        print(" ")
+
+
+        if(self.tr):
+            super(NeuralQL, self).update(self.tr.s1, self.tr.a, self.tr.r, self.tr.s2)
+
+        self.tr = storeTransition(copy.deepcopy(s1), a, r, copy.deepcopy(s2))
+
+    def update_Q(self, s, a, update):
         self.net.train(s, a, update)
 
     def addAction(self, i=0):
@@ -177,7 +208,7 @@ class Boltzman(QL):
         return pDist
 
     def T(self):
-        t = self.pars.startPoint - self.pars.speed * self.pars.time
+        t = self.pars.startPoint - self.pars.speed *self.pars.time
         return ((np.e ** t) / ((np.e ** t) + 1)) * self.pars.height + self.pars.lowBound
 
     def biasAction(self, a):
@@ -187,13 +218,6 @@ class Boltzman(QL):
 
 
 # EXPLOITATION
-class storeTransition:
-
-    def __init__(self, s1, a, r, s2):
-        self.s1 = s1
-        self.a = a
-        self.r = r
-        self.s2 = s2
 
 class nStepQL(NeuralQL):
 

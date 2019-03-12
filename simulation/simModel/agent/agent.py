@@ -39,8 +39,9 @@ class agent:
 
         mes.settingMessage("Action-state values table")
 
-        # self.qAgent = qLA.deepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
-        self.qAgent = qLA.deepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+        # self.qAgent = qLA.NeuralQL(len(self.currentState), self.environment.world.numActions, self.livePar)
+        self.qAgent = qLA.deepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+        # self.qAgent = qLA.deepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
         # self.qAgent = qLA.hDeepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
 
         mes.setMessage("Action-state values table")

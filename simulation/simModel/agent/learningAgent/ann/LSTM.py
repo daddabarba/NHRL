@@ -224,6 +224,9 @@ class QL_LSTM(LSTM):
         self.loss_function = lambda s1, a, predicted: (predicted - self.net(s1)[a])**2
 
     def train(self, s1, a, predicted):
+        self.optimizer.zero_grad()
+        self.net.zero_grad()
+        # self.net.reset_state()
 
 
         if len(np.shape(s1)) == 1:
@@ -242,10 +245,6 @@ class QL_LSTM(LSTM):
 
         loss.backward()
         self.optimizer.step()
-
-        self.optimizer.zero_grad()
-        self.net.zero_grad()
-        # self.net.reset_state()
 
         print("loss:\t" + str(loss.detach().numpy()))
 
