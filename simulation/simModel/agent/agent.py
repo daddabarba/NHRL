@@ -14,7 +14,7 @@ def attachSensors():
     return meta.getFunctionsDefinitions(sensors)
 
 class agent:
-    def __init__(self, startingState="c", environment="../../files/maze7.txt", pars=None, graphic=True, suppressPrint = False):
+    def __init__(self, startingState="c", environment="../../files/maze.txt", pars=None, graphic=True, suppressPrint = False):
 
         mes.suppress = suppressPrint
 
@@ -40,7 +40,8 @@ class agent:
         mes.settingMessage("Action-state values table")
 
         # self.qAgent = qLA.NeuralQL(len(self.currentState), self.environment.world.numActions, self.livePar)
-        self.qAgent = qLA.deepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+        # self.qAgent = qLA.deepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+        self.qAgent = qLA.hDeepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
         # self.qAgent = qLA.deepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
         # self.qAgent = qLA.hDeepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
 

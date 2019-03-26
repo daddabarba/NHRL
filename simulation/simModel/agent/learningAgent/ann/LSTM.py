@@ -69,19 +69,15 @@ class LSTMRL(nn.Module):
         # self.hc_state = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
         # self.hc_state_temp = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
 
-    # def state_update(self, x=None):
+    def state_update(self, x=None):
+        self.hc_state = self.hc_state_temp
 
-        # if x is not None:
-            # self.forward(x)
-
-        # self.hc_state = self.hc_state_temp
-
-    def detach_state(self):
-        self.hc_state = (self.hc_state[0].detach(), self.hc_state[1].detach())
+    def detached_state(self):
+        return (self.hc_state[0].detach(), self.hc_state[1].detach())
 
     def forward(self, x):
 
-        out_rnn, self.hc_state_temp = self.lstm_layer(x, (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size)))
+        out_rnn, self.hc_state_temp = self.lstm_layer(x, self.detached_state())
         out_linear = self.linear_layer(torch.sigmoid(out_rnn[-1]))
 
         return out_linear[-1]
@@ -132,8 +128,8 @@ class LSTM():
     def hcState(self):
         return self.net.hc_state
 
-    def state_update(self, x=None):
-        self.net.state_update(self.toTensor(x))
+    def state_update(self):
+        self.net.state_update()
 
     def train(self, x, y):
 
@@ -246,6 +242,6 @@ class QL_LSTM(LSTM):
         loss.backward()
         self.optimizer.step()
 
-        print("loss:\t" + str(loss.detach().numpy()))
+        #print("loss:\t" + str(loss.detach().numpy()))
 
         return loss.detach().numpy()

@@ -44,14 +44,6 @@ class QL():
         return torch.dot(self.Pi(s), self.Q(s))
 
     def update(self, s1, a, r, s2):
-        print("ACTUAL: ")
-        print("for: " + str(s1) + " -(" + str(a) + "," + str(r) + ")-> " + str(s2))
-        print("Q(s1,a): " + str(self.Q(s1)[a]))
-        print("update = " + str(r) + "+ " + str(self._gamma) + "*" + str(self.U(s2)) + " = " + str(r+self._gamma*self.U(s2)))
-        print("where U(s) = " + str(self.Pi(s2)) + " * " + str(self.Q(s2)))
-        print("with error: " + str((self.Q(s1)[a] - (+self._gamma*self.U(s2)))**2))
-        print(" ")
-
         update = r + self._gamma * self.U(s2)
 
         self.update_Q(s1, a, update)
@@ -113,14 +105,6 @@ class TabularQL(QL):
 
         return self.__class__(self.nStates, nBrothers, self.pars, parentTable)
 
-class storeTransition:
-
-    def __init__(self, s1, a, r, s2):
-        self.s1 = s1
-        self.a = a
-        self.r = r
-        self.s2 = s2
-
 class NeuralQL(QL):
     def __init__(self, stateSize, nActions, pars, net=None):
         super(NeuralQL, self).__init__(stateSize, nActions, pars)
@@ -130,32 +114,17 @@ class NeuralQL(QL):
         else:
             self.net = net
 
-        self.tr = None
-
     def __copy__(self):
         return self.__class__(self.nStates, self.nActions, self.pars, copy.deepcopy(self.net))
 
     def Q(self, s):
         return self.net(s)
 
-    def update(self, s1, a, r, s2):
-
-        print("CURRENT: ")
-        print("for: " + str(s1) + " -(" + str(a) + "," + str(r) + ")-> " + str(s2))
-        print("Q(s1,a): " + str(self.Q(s1)[a]))
-        print("update = " + str(r) + "+ " + str(self._gamma) + "*" + str(self.U(s2)) + " = " + str(r + self._gamma * self.U(s2)))
-        print("where U(s) = " + str(self.Pi(s2)) + " * " + str(self.Q(s2)))
-        print("with error: " + str((self.Q(s1)[a] - (+self._gamma * self.U(s2))) ** 2))
-        print(" ")
-
-
-        if(self.tr):
-            super(NeuralQL, self).update(self.tr.s1, self.tr.a, self.tr.r, self.tr.s2)
-
-        self.tr = storeTransition(copy.deepcopy(s1), a, r, copy.deepcopy(s2))
-
     def update_Q(self, s, a, update):
-        self.net.train(s, a, update)
+
+        with LSTM.State_Set(self.net, self.net.hcState()):
+            self.net.train(s, a, update)
+        self.net.state_update()
 
     def addAction(self, i=0):
         super(NeuralQL, self).addAction(i)
@@ -197,6 +166,7 @@ class NeuralQL(QL):
 # EXPLORATION
 
 class Boltzman(QL):
+
     def Pi(self, s):
 
         exponents = self.Q(s) / self.T()
@@ -208,7 +178,7 @@ class Boltzman(QL):
         return pDist
 
     def T(self):
-        t = self.pars.startPoint - self.pars.speed *self.pars.time
+        t = self.pars.startPoint - self.pars.speed * self.pars.time-
         return ((np.e ** t) / ((np.e ** t) + 1)) * self.pars.height + self.pars.lowBound
 
     def biasAction(self, a):
@@ -237,7 +207,6 @@ class nStepQL(NeuralQL):
         self._gamma = self._gamma ** self._lambda
 
         self.cnt = 0
-        self.tr = None
 
     def __copy__(self):
 
@@ -281,7 +250,7 @@ class nStepQL(NeuralQL):
 
 
             #with LSTM.State_Set(self.net, self.states[0]):
-            super(nStepQL, self).update(self.tr.s1, self.tr.a, self.tr.r, self.tr.s2)
+            super(nStepQL, self).update(s1, a, r, s2)
 
             self.A[-1] = a
             self.r_tot = (self.r_tot - self.R[0]) * self.roll + self.factor * r
@@ -293,8 +262,6 @@ class nStepQL(NeuralQL):
 
 
             # self.states = np.roll(self.states, -1, axis=0)
-
-        self.tr = storeTransition(copy.deepcopy(s1), a, r, copy.deepcopy(s2))
 
 
 # HIERARCHICAL
