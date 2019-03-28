@@ -63,7 +63,7 @@ class LSTMRL(nn.Module):
 
     def __deepcopy__(self, memodict={}):
 
-        return LSTMRL(self.input_size, self.rnn_size, self.output_size, copy.deepcopy(self.linear_layer), copy.deepcopy(self.lstm_layer), copy.deepcopy(self.hc_state))
+        return LSTMRL(self.input_size, self.rnn_size, self.output_size, copy.deepcopy(self.linear_layer), copy.deepcopy(self.lstm_layer), self.state_copy())
 
     # def reset_state(self):
         # self.hc_state = (torch.zeros(1, 1, self.rnn_size), torch.zeros(1, 1, self.rnn_size))
@@ -74,6 +74,9 @@ class LSTMRL(nn.Module):
 
     def detached_state(self):
         return (self.hc_state[0].detach(), self.hc_state[1].detach())
+
+    def state_copy(self):
+        return (torch.Tensor(copy.deepcopy(self.hc_state[0].detach().numpy())), torch.Tensor(copy.deepcopy(self.hc_state[1].detach().numpy())))
 
     def forward(self, x):
 
@@ -207,9 +210,14 @@ class LSTM():
         self.net.linear_layer.weight = torch.nn.Parameter(F.pad(self.net.linear_layer.weight, (0, 0, 0, 1)))
         self.net.linear_layer.bias = torch.nn.Parameter(F.pad(self.net.linear_layer.bias, (0, 1)))
 
-        self.net.linear_layer.weight[-1] += self.net.linear_layer.weight[idx]
-        self.net.linear_layer.bias[-1] += self.net.linear_layer.bias[idx]
+        temp_w = torch.zeros(self.net.linear_layer.weight.shape)
+        temp_b = torch.zeros(self.net.linear_layer.bias.shape)
 
+        temp_w[-1] = temp_w[-1] + self.net.linear_layer.weight[idx]
+        temp_b[-1] = temp_b[-1] + self.net.linear_layer.bias[idx]
+
+        self.net.linear_layer.weight = torch.nn.Parameter(self.net.linear_layer.weight + temp_w)
+        self.net.linear_layer.bias = torch.nn.Parameter(self.net.linear_layer.bias + temp_b)
 
 
 class QL_LSTM(LSTM):
@@ -218,6 +226,9 @@ class QL_LSTM(LSTM):
         super(QL_LSTM, self).__init__(input_size, rnn_size, output_size, alpha, net)
 
         self.loss_function = lambda s1, a, predicted: (predicted - self.net(s1)[a])**2
+
+    def __copy__(self):
+        return QL_LSTM(self.input_size, self.rnn_size, self.output_size, self.alpha, copy.deepcopy(self.net))
 
     def train(self, s1, a, predicted):
         self.optimizer.zero_grad()

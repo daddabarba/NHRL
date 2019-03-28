@@ -41,7 +41,7 @@ class agent:
 
         # self.qAgent = qLA.NeuralQL(len(self.currentState), self.environment.world.numActions, self.livePar)
         # self.qAgent = qLA.deepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
-        self.qAgent = qLA.hDeepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
+        self.qAgent = qLA.hDeepSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar, struc=[2])
         # self.qAgent = qLA.deepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
         # self.qAgent = qLA.hDeepNSoftmax(len(self.currentState), self.environment.world.numActions, self.livePar)
 

@@ -44,6 +44,7 @@ class QL():
         return torch.dot(self.Pi(s), self.Q(s))
 
     def update(self, s1, a, r, s2):
+
         update = r + self._gamma * self.U(s2)
 
         self.update_Q(s1, a, update)
@@ -121,7 +122,6 @@ class NeuralQL(QL):
         return self.net(s)
 
     def update_Q(self, s, a, update):
-
         with LSTM.State_Set(self.net, self.net.hcState()):
             self.net.train(s, a, update)
         self.net.state_update()
@@ -178,7 +178,7 @@ class Boltzman(QL):
         return pDist
 
     def T(self):
-        t = self.pars.startPoint - self.pars.speed * self.pars.time-
+        t = self.pars.startPoint - self.pars.speed * self.pars.time
         return ((np.e ** t) / ((np.e ** t) + 1)) * self.pars.height + self.pars.lowBound
 
     def biasAction(self, a):
@@ -279,14 +279,14 @@ class hierarchy():
         struc = [1] + struc
 
         # Initialize layer constructor
-        vecCLS = np.vectorize(QLCls)
+        vecCLS = lambda nStates, nActions, pars, len: [ QLCls(nStates, nActions, pars) for i in range(len)]
         rep = np.repeat
 
         # Build hierarchy of policies
 
         self.demons = np.empty(len(struc) - 1, dtype=object)
         for i in range(len(struc) - 1):
-            self.demons[i] = np.array(vecCLS(rep(nStates, struc[i]), rep(struc[i + 1], struc[i]), rep(pars, struc[i])))
+            self.demons[i] = np.array(vecCLS(nStates, struc[i + 1], pars, struc[i]))
 
         # Keep track of stats
         initStats = np.vectorize(stats.Stats)
@@ -303,16 +303,16 @@ class hierarchy():
         self.__initStateVariables(len(struc))
 
         # Vectorize QL methods
-        self.layerPi = np.vectorize(QLCls.Pi, signature='(),(i)->(n)', otypes=[QLCls])
-        self.layerUpdate = np.vectorize(QLCls.update, signature='(),(i),(),(),(i)->()', otypes=[QLCls])
+        self.layerPi = lambda layer, s : np.array([demon.Pi(s).detach().numpy() for demon in layer])
+        self.layerUpdate = lambda layer, s1, p, a, r, s2 : [[layer[i].update(s1,k,r*p[k][a],s2) for k in range(len(p))] for i in range(len(layer))]
 
         self.layerUpdateStats = np.vectorize(stats.Stats.update_stats, signature='(),(i),()->()', otypes=[stats.Stats])
 
-        self.abstractLayer = np.vectorize(self.actionAbstraction, signature='(),()->()', otypes=[hierarchy])
-        self.layerAddAction = np.vectorize(QLCls.addAction, signature='(),()->()', otypes=[QLCls])
+        self.abstractLayer = lambda layer, demons : [self.actionAbstraction(layer, i) for i in demons]
+        self.layerAddAction = lambda layer, i : [demon.addAction(i) for demon in layer]
 
     def __call__(self, state):
-        return np.random.choice(self.nActions, p=self.Pi(state))
+        return np.random.choice(self.nActions, p=self.Pi(state)[0])
 
     def __initStateVariables(self, size):
 
@@ -322,7 +322,10 @@ class hierarchy():
         self.__likelihoods = np.empty(size - 1, dtype=np.ndarray)
 
         self.PiVec = np.empty(size, dtype=np.ndarray)
-        self.PiVec[0] = np.array([1.0])
+        self.PiVec[0] = np.array([[1.0]])
+
+        self.PostVec = np.empty(size, dtype=np.ndarray)
+        self.PostVec[-1] = np.eye(self.nActions)
 
     def __getLikelihoods(self, state):
 
@@ -341,7 +344,8 @@ class hierarchy():
         self.__getLikelihoods(state)
 
         for i in range(1, self.PiVec.size):
-            self.PiVec[i] = self.PiVec[i - 1].dot(self.__likelihoods[i - 1])
+            self.PiVec[i] = np.dot(self.PiVec[i - 1], self.__likelihoods[i - 1])
+            self.PostVec[self.PostVec.size -1 -i] = np.dot(self.__likelihoods[self.PostVec.size -1 -i], self.PostVec[self.PostVec.size -i] )
 
         return self.PiVec[-1].astype(float) / self.PiVec[-1].sum()
 
@@ -351,8 +355,14 @@ class hierarchy():
             self.Pi(s1)
 
         # Train each demon with the respective weighted reward
-        for i in range(self.demons.size):
-            self.layerUpdate(self.demons[i], s1, a, r * self.PiVec[i], s2)
+        # for i in range(self.demons.size):
+            # self.layerUpdate(self.demons[i], s1, self.PostVec[i], r, s2)
+
+        for demon in self.demons[-1]:
+            demon.update(s1, a, r, s2)
+
+        for i in range(0, len(self.demons)-1):
+            self.layerUpdate(self.demons[i], s1, self.PostVec[i+1], a, r, s2)
 
         self.__beenTrained = True
 
@@ -386,13 +396,13 @@ class hierarchy():
                 return
 
             # Copy the demon itself
-            self.demons[layer] = np.append(self.demons[layer], copy.copy(self.demons[layer][demon]))
+            self.demons[layer] = np.append(self.demons[layer], copy.deepcopy(self.demons[layer][demon]))
 
             # Demons in higher levels must be aware of new demon at lower layer
             self.layerAddAction(self.demons[layer - 1], demon)
 
             self.stats[layer][demon].scale(2.0)
-            self.stats[layer] = np.append(self.stats[layer], copy.copy(self.stats[layer][demon]))
+            self.stats[layer] = np.append(self.stats[layer], copy.deepcopy(self.stats[layer][demon]))
 
             if layer == 1:
                 self.topDemonStats.reshape_mean()
