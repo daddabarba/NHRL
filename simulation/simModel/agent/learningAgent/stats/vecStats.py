@@ -31,7 +31,7 @@ class Stats():
         newMu = (self.data[MU] * self.data[N] + newPoint * weight) / newN
 
         if self.data[VAR] or self.data[VAR] == 0.0:
-            self.data[VAR] = (self.data[VAR] * self.data[N] + self.data[N] * ((self.data[MU] ** 2).sum()) + weight * ((newPoint ** 2).sum()) - newN * ((newMu ** 2).sum())) / newN
+            self.data[VAR] = (self.data[VAR] * self.data[N] + self.data[N] * ((self.data[MU] ** 2).sum()) + ((weight*newPoint ** 2).sum()) - newN * ((newMu ** 2).sum())) / newN
         else:
             self.data[VAR] = 0.0
 

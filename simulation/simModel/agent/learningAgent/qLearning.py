@@ -386,8 +386,10 @@ class hierarchy():
 
     def actionAbstraction(self, layer, demon, override=False):
 
+        print("layer: " + str(layer) + " demon: " + str(demon) + " var: " + str(self.stats[layer][demon].getVar() / self.layerStats.getVar()))
+
         if override or (
-                (self.stats[layer][demon].getVar() / self.layerStats.getVar()) > self.pars.SDMax and self.stats[layer][
+                ( self.layerStats.getVar() > 0 and self.stats[layer][demon].getVar() / self.layerStats.getVar()) > self.pars.SDMax and self.stats[layer][
             demon].getN() > 1):
 
             # Abstract policy at layer layer (with index demon)
