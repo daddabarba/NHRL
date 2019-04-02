@@ -5,6 +5,7 @@ import copy
 N = 0
 MU = 1
 VAR = 2
+T = 3
 
 def l(v):
     return np.linalg.norm(v)
@@ -13,8 +14,9 @@ class Stats():
 
     def __init__(self, n=0.0, mu=0.0, var=None):
 
-        self.data = np.empty(3, dtype=object)
+        self.data = np.empty(4, dtype=object)
 
+        self.data[T] = 0
         self.data[N] = n
         self.data[MU] = mu
         self.data[VAR] = var
@@ -29,11 +31,12 @@ class Stats():
 
         newN = self.data[N] + weight
         newMu = (self.data[MU] * self.data[N] + newPoint * weight) / newN
+        newT = self.data[T] + 1
 
-        if self.data[VAR] or self.data[VAR] == 0.0:
-            self.data[VAR] = (self.data[VAR] * self.data[N] + self.data[N] * ((self.data[MU] ** 2).sum()) + ((weight*newPoint ** 2).sum()) - newN * ((newMu ** 2).sum())) / newN
+        if isinstance(self.data[VAR], np.ndarray):
+            self.data[VAR] = (self.data[VAR] * self.data[N] - (self.data[T]+2) * self.data[MU]**2 + (newT+2) * newMu**2 + (newPoint*weight)**2) / newN
         else:
-            self.data[VAR] = 0.0
+            self.data[VAR] = np.array([0.0])
 
         self.data[N] = newN
         self.data[MU] = newMu
@@ -45,7 +48,11 @@ class Stats():
         self.data[VAR] *= 1.0 / (n*n)
 
     def getVar(self):
-        return self.data[VAR]
+
+        if not isinstance(self.data[VAR], np.ndarray):
+            return None
+
+        return self.data[VAR].sum()
 
     def getMu(self):
         return self.data[MU]

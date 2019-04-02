@@ -386,8 +386,6 @@ class hierarchy():
 
     def actionAbstraction(self, layer, demon, override=False):
 
-        print("layer: " + str(layer) + " demon: " + str(demon) + " var: " + str(self.stats[layer][demon].getVar() / self.layerStats.getVar()))
-
         if override or (
                 ( self.layerStats.getVar() > 0 and self.stats[layer][demon].getVar() / self.layerStats.getVar()) > self.pars.SDMax and self.stats[layer][
             demon].getN() > 1):
@@ -396,6 +394,10 @@ class hierarchy():
 
             if layer == 0:
                 return
+
+            if layer==1:
+                self.topDemonStats.data[stats.VAR] = np.resize(self.topDemonStats.data[stats.VAR], len(self.demons[1])+1)
+                self.topDemonStats.data[stats.VAR][-1] = self.topDemonStats.data[stats.VAR][demon]
 
             # Copy the demon itself
             self.demons[layer] = np.append(self.demons[layer], copy.deepcopy(self.demons[layer][demon]))
