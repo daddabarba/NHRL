@@ -267,7 +267,7 @@ class nStepQL(NeuralQL):
 # HIERARCHICAL
 
 class hierarchy():
-    def __init__(self, nStates, nActions, pars, QLCls, struc=[]):
+    def __init__(self, nStates, nActions, pars, QLCls, struc=[], max=None):
 
         self.pars = pars
 
@@ -277,6 +277,11 @@ class hierarchy():
         # Add primitve actions to structure
         struc += [nActions]
         struc = [1] + struc
+
+        if max:
+            self.max = [1] + max
+        else:
+            self.max = None
 
         # Initialize layer constructor
         vecCLS = lambda nStates, nActions, pars, len: [ QLCls(nStates, nActions, pars) for i in range(len)]
@@ -392,6 +397,9 @@ class hierarchy():
 
             # Abstract policy at layer layer (with index demon)
 
+            if self.max and len(self.demons[layer]) >= self.max[layer]:
+                return
+
             if layer == 0:
                 return
 
@@ -414,6 +422,9 @@ class hierarchy():
     def taskAbstraction(self, override=False):
 
         if (self.topDemonStats.getVar() == 0) or (self.topDemonStats.getN() == 0):
+            return
+
+        if self.max and len(self.demons) >= len(self.max):
             return
 
         norm = np.linalg.norm(self.__likelihoods[0] - self.topDemonStats.getMu()) / self.topDemonStats.getVar()
@@ -460,16 +471,16 @@ class deepNSoftmax(deepSoftmax, nStepQL):
 # CONCRETE HIERARCHIES
 
 class hDeepSoftmax(hierarchy):
-    def __init__(self, nStates, nActions, pars, struc=[]):
-        super(hDeepSoftmax, self).__init__(nStates, nActions, pars, deepSoftmax, struc)
+    def __init__(self, nStates, nActions, pars, struc=[], max=None):
+        super(hDeepSoftmax, self).__init__(nStates, nActions, pars, deepSoftmax, struc, max)
 
     def abstractState(self, s):
         return self.demons[0][0].abstractState()
 
 
 class hDeepNSoftmax(hierarchy):
-    def __init__(self, nStates, nActions, pars, struc=[]):
-        super(hDeepNSoftmax, self).__init__(nStates, nActions, pars, deepNSoftmax, struc)
+    def __init__(self, nStates, nActions, pars, struc=[], max=None):
+        super(hDeepNSoftmax, self).__init__(nStates, nActions, pars, deepNSoftmax, struc, max)
 
     def abstractState(self, s):
         return self.demons[0][0].abstractState()
